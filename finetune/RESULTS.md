@@ -11,7 +11,7 @@ generator and metrics are verified, with honest numbers and honest caveats.
 | Base model | `Qwen/Qwen2.5-0.5B-Instruct` |
 | Adapter | LoRA, `r=8`, `alpha=16`, `dropout=0.05`, `q_proj`/`v_proj` |
 | Training | 3 epochs, `grad_accum=8`, `seed=42` |
-| Dataset | `outputs/dataset-20261012-231434.jsonl` (the 9-example tax-freelancer run) |
+| Dataset | `outputs/dataset-20261012-231434.jsonl` (the 8-row training split of the 9-example tax-freelancer run) |
 | Split | 6 train / 2 eval (the run's `--val-ratio 0.1` split fed training; eval here is a further 25% hold-out of that file) |
 | Command | `python -m finetune.train_lora --dataset outputs/dataset-20261012-231434.jsonl --base-model Qwen/Qwen2.5-0.5B-Instruct --epochs 3 --out finetune_output` |
 | Runtime | ~2 min total (23 s of training on CPU) |

@@ -55,6 +55,13 @@ with st.sidebar:
         "Minimum axis score", 0.0, 10.0, config.DEFAULT_MIN_AXIS_SCORE, step=0.5
     )
     concurrency = st.slider("Concurrency", 1, 8, config.MAX_CONCURRENCY)
+    rewrite_rounds = st.slider(
+        "Rewrite-on-reject rounds",
+        0,
+        3,
+        config.DEFAULT_REWRITE_ROUNDS,
+        help="Regenerate examples the grader rejects, using its reason as guidance. 0 disables.",
+    )
     use_embeddings = st.checkbox("Semantic de-duplication (embeddings)", value=True)
 
     st.divider()
@@ -100,6 +107,7 @@ if run:
             use_sample_sources=demo_mode,
             use_embeddings=use_embeddings,
             max_concurrency=concurrency,
+            max_rewrite_rounds=rewrite_rounds,
             on_progress=on_progress,
         )
         st.session_state["result"] = result
@@ -119,11 +127,12 @@ if result is not None:
     st.success(f"Done — kept **{stats.kept}** of {stats.generated} generated examples.")
     st.divider()
 
-    c1, c2, c3, c4 = st.columns(4)
+    c1, c2, c3, c4, c5 = st.columns(5)
     c1.metric("Kept", stats.kept)
     c2.metric("Rejected", stats.rejected)
     c3.metric("Duplicates removed", stats.duplicates_removed)
-    c4.metric("Est. cost (USD)", f"${manifest.estimated_cost_usd:.4f}")
+    c4.metric("Recovered by rewrite", stats.recovered)
+    c5.metric("Est. cost (USD)", f"${manifest.estimated_cost_usd:.4f}")
 
     if manifest.errors:
         with st.expander(f"⚠️ {len(manifest.errors)} warning(s) during the run"):

@@ -14,7 +14,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from . import __version__, config
 from .dedupe import dedupe
-from .generator import generate_examples
+from .generator import generate_examples, rewrite_examples
 from .grader import apply_threshold, grade_examples
 from .llm import TokenFactoryClient
 from .logging_utils import get_logger
@@ -71,6 +71,7 @@ def run_pipeline(
     use_sample_sources: bool = False,
     use_embeddings: bool = True,
     max_concurrency: int | None = None,
+    max_rewrite_rounds: int | None = None,
     client: TokenFactoryClient | None = None,
     search_fn: Callable[..., list[Source]] | None = None,
     on_progress: ProgressFn | None = None,
@@ -170,6 +171,72 @@ def run_pipeline(
             grade_meter.tick(f"Graded {outcomes[url].title[:40]}...")
 
     apply_threshold(generated, keep_threshold, min_axis_score)
+
+    # --- 3b. Rewrite on reject (optional) ----------------------------------
+    rewrite_rounds = max(
+        0, max_rewrite_rounds if max_rewrite_rounds is not None else config.DEFAULT_REWRITE_ROUNDS
+    )
+    if rewrite_rounds > 0:
+        rewrite_meter = _Meter(progress, 86.0, 90.0)
+        for round_index in range(rewrite_rounds):
+            weak = [e for e in generated if e.verdict == "rejected" and e.scores]
+            if not weak:
+                break
+
+            groups: dict[str, list[Example]] = {}
+            for example in weak:
+                groups.setdefault(example.source_url, []).append(example)
+            targets = [(url, items) for url, items in groups.items() if url in by_url]
+            rewrite_meter.set_total(len(targets))
+
+            def _rewrite(item) -> list[Example]:
+                url, items = item
+                return rewrite_examples(
+                    client, by_url[url], items, topic=topic, fmt=fmt, model=generator_model
+                )
+
+            replacements: list[Example] = []
+            replace_lock = threading.Lock()
+            with ThreadPoolExecutor(max_workers=min(worker, max(1, len(targets)))) as pool:
+                future_map = {pool.submit(_rewrite, item): item[0] for item in targets}
+                for future in as_completed(future_map):
+                    url = future_map[future]
+                    try:
+                        produced = future.result()
+                    except Exception as exc:  # noqa: BLE001
+                        errors.append(f"rewrite failed for {url}: {exc}")
+                        logger.error("Rewrite failed for %s: %s", url, exc)
+                        produced = []
+                    with replace_lock:
+                        replacements.extend(produced)
+                    rewrite_meter.tick(f"Rewrote examples from {outcomes[url].title[:40]}...")
+
+            if not replacements:
+                break
+
+            regroups: dict[str, list[Example]] = {}
+            for example in replacements:
+                regroups.setdefault(example.source_url, []).append(example)
+            with ThreadPoolExecutor(max_workers=min(worker, max(1, len(regroups)))) as pool:
+                futures = [
+                    pool.submit(grade_examples, client, by_url[url], items, grader_model)
+                    for url, items in regroups.items()
+                    if url in by_url
+                ]
+                for future in as_completed(futures):
+                    try:
+                        future.result()
+                    except Exception as exc:  # noqa: BLE001
+                        errors.append(f"rewrite grading failed: {exc}")
+                        logger.error("Rewrite grading failed: %s", exc)
+
+            apply_threshold(replacements, keep_threshold, min_axis_score)
+            generated.extend(replacements)
+            stats.rewritten += len(replacements)
+            logger.info(
+                "Rewrite round %d: %d replacements generated", round_index + 1, len(replacements)
+            )
+
     stats.graded = sum(1 for e in generated if e.scores)
 
     # --- 4. Dedupe ---------------------------------------------------------
@@ -187,6 +254,7 @@ def run_pipeline(
     progress(96.0, "Building quality report...")
     stats.kept = len(kept)
     stats.rejected = len(rejected)
+    stats.recovered = sum(1 for e in kept if e.rewritten)
     if kept:
         n = len(kept)
         stats.avg_accuracy = round(sum(e.scores.get("accuracy", 0) for e in kept) / n, 2)
@@ -214,6 +282,7 @@ def run_pipeline(
             "dedupe_threshold": config.DEFAULT_DEDUPE_THRESHOLD,
             "use_embeddings": use_embeddings,
             "max_concurrency": worker,
+            "max_rewrite_rounds": rewrite_rounds,
             "sample_sources": use_sample_sources,
         },
     )

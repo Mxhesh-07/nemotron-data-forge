@@ -44,6 +44,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--concurrency", type=int, default=config.MAX_CONCURRENCY, help="Parallel model requests."
     )
+    parser.add_argument(
+        "--rewrite-rounds",
+        type=int,
+        default=config.DEFAULT_REWRITE_ROUNDS,
+        help="Rewrite-on-reject rounds: regenerate examples the grader rejected (0 disables).",
+    )
     parser.add_argument("--demo", action="store_true", help="Use bundled sample sources (no Tavily).")
     parser.add_argument(
         "--no-embeddings", action="store_true", help="Disable semantic de-duplication."
@@ -65,6 +71,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.examples_per_source < 1 or args.max_sources < 1:
         logger.error("--examples-per-source and --max-sources must be >= 1")
         return 2
+    if args.rewrite_rounds < 0:
+        logger.error("--rewrite-rounds must be >= 0")
+        return 2
 
     out_dir = Path(args.out) if args.out else config.OUTPUT_DIR
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -85,6 +94,7 @@ def main(argv: list[str] | None = None) -> int:
             use_sample_sources=args.demo,
             use_embeddings=not args.no_embeddings,
             max_concurrency=args.concurrency,
+            max_rewrite_rounds=args.rewrite_rounds,
             on_progress=progress,
         )
     except ConfigError as exc:

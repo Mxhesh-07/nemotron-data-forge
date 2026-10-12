@@ -36,6 +36,7 @@ def test_pipeline_rejects_low_scores():
         client=FakeClient(score=5.0),
         search_fn=fake_search(2),
         use_embeddings=False,
+        max_rewrite_rounds=0,
     )
     assert result.stats.kept == 0
     assert result.stats.rejected == 2

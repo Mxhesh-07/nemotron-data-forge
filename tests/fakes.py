@@ -24,6 +24,7 @@ class FakeClient:
         fail_marker: str | None = None,
         examples: Callable[[str], list[dict]] | None = None,
         embeddings: list[list[float]] | None = None,
+        scores_sequence: list[float] | None = None,
     ) -> None:
         self.usage = UsageTracker()
         self.calls: list[tuple] = []
@@ -33,6 +34,7 @@ class FakeClient:
         self.fail_marker = fail_marker
         self._examples = examples
         self._embeddings = embeddings
+        self._scores_sequence = list(scores_sequence) if scores_sequence else None
 
     # -- helpers ------------------------------------------------------------
     def _next(self) -> int:
@@ -41,6 +43,8 @@ class FakeClient:
             return self._counter
 
     def _generate(self, text: str) -> dict:
+        if "Improve these rejected" in text:
+            return {"examples": self._improved(text)}
         match = re.search(r"Create (\d+) high", text)
         count = int(match.group(1)) if match else 1
         if self._examples is not None:
@@ -54,14 +58,32 @@ class FakeClient:
             )
         return {"examples": out}
 
+    def _improved(self, text: str) -> list[dict]:
+        count = text.count("INSTRUCTION:")
+        out = []
+        for _ in range(max(1, count)):
+            n = self._next()
+            out.append(
+                {"instruction": f"Improved question number {n} about the topic?",
+                 "response": f"Grounded improved answer number {n}."}
+            )
+        return out
+
+    def _next_score(self) -> float:
+        with self._lock:
+            if self._scores_sequence:
+                return self._scores_sequence.pop(0)
+        return self.score
+
     def _grade(self, text: str) -> dict:
         n = text.count("INSTRUCTION:")
+        score = self._next_score()
         rows = [
             {
                 "index": i,
-                "accuracy": self.score,
-                "helpfulness": self.score,
-                "clarity": self.score,
+                "accuracy": score,
+                "helpfulness": score,
+                "clarity": score,
                 "reason": "looks good",
             }
             for i in range(n)

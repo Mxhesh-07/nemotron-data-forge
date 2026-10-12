@@ -32,7 +32,7 @@ treats dataset quality as the product:
   exponential backoff and jitter.
 - **Observable.** Every run writes a manifest with per-model token usage, an
   estimated USD cost, timings, and a list of any warnings.
-- **Tested.** 97 unit/integration tests run entirely offline against fakes, plus
+- **Tested.** 103 unit/integration tests run entirely offline against fakes, plus
   a render test for the Streamlit UI and a CI workflow.
 
 ---
@@ -107,6 +107,7 @@ Key flags:
 | `--threshold` | `7.0` | Minimum average score to keep an example |
 | `--min-axis-score` | `5.0` | Minimum score on every axis |
 | `--concurrency` | `4` | Parallel model requests |
+| `--rewrite-rounds` | `1` | Rewrite-on-reject rounds (0 disables) |
 | `--demo` | off | Use bundled sample sources (no Tavily) |
 | `--no-embeddings` | off | Disable semantic de-duplication |
 | `--out` | `outputs/` | Output directory |
@@ -160,7 +161,8 @@ nemotron_data_forge/pipeline.py            orchestration, concurrency, manifest
 | Model returns bad JSON | JSON mode, graceful fallback, then a single repair turn; fenced/prose JSON is salvaged (`extract_json`) |
 | Long sources / long batches | Sources are chunked; grading is batched (`GRADE_BATCH_SIZE`) |
 | Rate limits & latency | Bounded concurrency with a thread pool (`--concurrency`) |
-| Hallucination | Grader scores *accuracy against the source*; low scores are dropped |
+| Hallucination | Grader scores *accuracy against the source*; low scores are dropped or rewritten |
+| Low-quality output | Rewrite-on-reject regenerates failed examples using the grader's reason (`--rewrite-rounds`) |
 | Bad output | Length/emptiness validation, score clamping, per-axis floor |
 | One source failing | Recorded per-source, run continues, surfaced in the manifest |
 | Cost visibility | Per-model token accounting + estimated USD cost from a pricing table |
@@ -196,7 +198,7 @@ uses the generated `outputs/dataset-*.jsonl`. Open
 
 ```bash
 pip install -e ".[dev]"
-pytest          # 97 tests, fully offline (fakes mock the models and search)
+pytest          # 103 tests, fully offline (fakes mock the models and search)
 ruff check .    # lint
 ```
 
@@ -250,7 +252,7 @@ base URL, pipeline defaults (topic, format, counts, thresholds), and limits
 ## Roadmap
 
 - [x] Before/after demo: fine-tune a small model on the dataset to prove quality
-- [ ] Rewrite step: re-generate examples the grader rejects (instead of dropping)
+- [x] Rewrite step: re-generate examples the grader rejects (instead of dropping)
 - [ ] Stream progress from a Serverless Job back to the UI
 
 ## License

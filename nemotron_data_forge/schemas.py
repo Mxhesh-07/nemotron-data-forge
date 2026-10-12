@@ -29,6 +29,7 @@ class Example:
     average_score: float = 0.0
     verdict: str = "pending"  # kept | rejected | duplicate
     reason: str = ""
+    rewritten: bool = False  # True if this came from the rewrite-on-reject step
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -58,6 +59,8 @@ class PipelineStats:
     kept: int = 0
     rejected: int = 0
     duplicates_removed: int = 0
+    rewritten: int = 0
+    recovered: int = 0
     avg_accuracy: float = 0.0
     avg_helpfulness: float = 0.0
     avg_clarity: float = 0.0

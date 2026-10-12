@@ -11,11 +11,13 @@ from pathlib import Path
 from . import __version__, config
 from .errors import ConfigError
 from .export import (
+    EXPORT_FORMATS,
     dataset_card,
     push_to_huggingface,
     quality_report,
     save_json,
     save_text,
+    split_dataset,
     to_jsonl,
 )
 from .logging_utils import configure_logging, get_logger
@@ -56,6 +58,18 @@ def build_parser() -> argparse.ArgumentParser:
         default=config.DEFAULT_MAX_USD,
         help="Soft spend cap in USD for the run (0 = unlimited).",
     )
+    parser.add_argument(
+        "--export-format",
+        default="alpaca",
+        choices=EXPORT_FORMATS,
+        help="Dataset record layout: alpaca, sharegpt, openai or raw.",
+    )
+    parser.add_argument(
+        "--val-ratio",
+        type=float,
+        default=0.0,
+        help="Fraction held out for a validation split, e.g. 0.1 (0 = no split).",
+    )
     parser.add_argument("--demo", action="store_true", help="Use bundled sample sources (no Tavily).")
     parser.add_argument(
         "--no-embeddings", action="store_true", help="Disable semantic de-duplication."
@@ -82,6 +96,9 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     if args.max_usd < 0:
         logger.error("--max-usd must be >= 0")
+        return 2
+    if not 0.0 <= args.val_ratio < 1.0:
+        logger.error("--val-ratio must be in [0, 1)")
         return 2
 
     out_dir = Path(args.out) if args.out else config.OUTPUT_DIR
@@ -114,7 +131,16 @@ def main(argv: list[str] | None = None) -> int:
         logger.error("Interrupted")
         return 130
 
-    jsonl_path = to_jsonl(result.examples, out_dir / f"dataset-{stamp}.jsonl")
+    train, val = split_dataset(result.examples, args.val_ratio)
+    result.manifest.config["export_format"] = args.export_format
+    result.manifest.config["val_ratio"] = args.val_ratio
+    result.manifest.config["train_examples"] = len(train)
+    result.manifest.config["val_examples"] = len(val)
+
+    jsonl_path = to_jsonl(train, out_dir / f"dataset-{stamp}.jsonl", fmt=args.export_format)
+    val_path = None
+    if val:
+        val_path = to_jsonl(val, out_dir / f"val-{stamp}.jsonl", fmt=args.export_format)
     report_path = save_text(
         quality_report(result.examples, result.rejected, result.stats, result.sources, result.manifest),
         out_dir / f"quality-report-{stamp}.md",
@@ -128,7 +154,9 @@ def main(argv: list[str] | None = None) -> int:
     if not args.quiet:
         print("\n=== Summary ===")
         print(json.dumps(result.stats.to_dict(), indent=2))
-        print(f"\nDataset:  {jsonl_path}")
+        print(f"\nDataset:  {jsonl_path}  ({args.export_format}, {len(train)} rows)")
+        if val_path is not None:
+            print(f"Val:      {val_path}  ({len(val)} rows)")
         print(f"Report:   {report_path}")
         print(f"Manifest: {manifest_path}")
         print(f"Card:     {card_path}")

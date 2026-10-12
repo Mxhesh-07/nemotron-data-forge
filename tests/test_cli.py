@@ -49,6 +49,44 @@ def test_cli_invalid_counts_return_2(tmp_path):
     assert main(["--demo", "--max-sources", "0", "--out", str(tmp_path), "--quiet"]) == 2
 
 
+def test_cli_export_format_and_split(tmp_path):
+    code = main(
+        [
+            "--demo",
+            "--topic",
+            "tax",
+            "--examples-per-source",
+            "1",
+            "--max-sources",
+            "4",
+            "--out",
+            str(tmp_path),
+            "--quiet",
+            "--export-format",
+            "openai",
+            "--val-ratio",
+            "0.25",
+            "--no-embeddings",
+        ]
+    )
+    assert code == 0
+    files = {p.name: p for p in Path(tmp_path).iterdir()}
+    dataset = next(p for n, p in files.items() if n.startswith("dataset-"))
+    val = next(p for n, p in files.items() if n.startswith("val-"))
+    assert "messages" in json.loads(dataset.read_text(encoding="utf-8").splitlines()[0])
+    assert "messages" in json.loads(val.read_text(encoding="utf-8").splitlines()[0])
+    manifest = json.loads(
+        next(p for n, p in files.items() if n.startswith("manifest-")).read_text(encoding="utf-8")
+    )
+    assert manifest["config"]["export_format"] == "openai"
+    assert manifest["config"]["val_ratio"] == 0.25
+
+
+def test_cli_rejects_bad_val_ratio(tmp_path):
+    assert main(["--demo", "--val-ratio", "1.0", "--out", str(tmp_path), "--quiet"]) == 2
+    assert main(["--demo", "--val-ratio=-0.1", "--out", str(tmp_path), "--quiet"]) == 2
+
+
 def test_cli_manifest_json_flag(tmp_path, capsys):
     code = main(
         [

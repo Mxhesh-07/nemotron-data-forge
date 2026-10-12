@@ -2,6 +2,8 @@
 
 import json
 
+import pytest
+
 from nemotron_data_forge.export import (
     dataset_card,
     quality_report,
@@ -69,3 +71,66 @@ def test_save_text_and_json(tmp_path):
     p2 = save_json({"a": 1}, tmp_path / "sub" / "b.json")
     assert p1.read_text(encoding="utf-8") == "hello"
     assert json.loads(p2.read_text(encoding="utf-8")) == {"a": 1}
+
+
+def _examples(make_example, n):
+    return [_example(make_example, i) for i in range(1, n + 1)]
+
+
+def test_export_formats_have_expected_shapes(make_example):
+    from nemotron_data_forge.export import EXPORT_FORMATS, records_jsonl
+
+    assert EXPORT_FORMATS == ["alpaca", "sharegpt", "openai", "raw"]
+    ex = [_example(make_example, 1)]
+
+    alpaca = json.loads(records_jsonl(ex, "alpaca"))
+    assert alpaca["instruction"] == "Question 1?" and alpaca["output"] == "Answer 1."
+    assert alpaca["format"] == "Q&A" and alpaca["scores"]["accuracy"] == 9.0
+
+    share = json.loads(records_jsonl(ex, "sharegpt"))
+    assert share["conversations"][0]["from"] == "human"
+    assert share["conversations"][1]["value"] == "Answer 1."
+
+    oai = json.loads(records_jsonl(ex, "openai"))
+    assert oai["messages"][0]["role"] == "user"
+    assert oai["messages"][1]["content"] == "Answer 1."
+
+    raw = json.loads(records_jsonl(ex, "raw"))
+    assert raw["response"] == "Answer 1." and "output" not in raw
+
+
+def test_records_jsonl_rejects_unknown_format(make_example):
+    from nemotron_data_forge.export import records_jsonl
+
+    with pytest.raises(ValueError):
+        records_jsonl([_example(make_example)], "csv")
+
+
+def test_to_jsonl_honours_format(make_example, tmp_path):
+    path = to_jsonl(_examples(make_example, 2), tmp_path / "d.jsonl", fmt="openai")
+    first = json.loads(path.read_text(encoding="utf-8").splitlines()[0])
+    assert "messages" in first
+
+
+def test_split_dataset(make_example):
+    from nemotron_data_forge.export import split_dataset
+
+    ex = _examples(make_example, 10)
+    train, val = split_dataset(ex, 0.2, seed=1)
+    assert len(val) == 2 and len(train) == 8
+    assert {id(e) for e in train}.isdisjoint({id(e) for e in val})
+    # Deterministic for a given seed.
+    assert [e.instruction for e in val] == [e.instruction for e in split_dataset(ex, 0.2, 1)[1]]
+
+
+def test_split_dataset_edge_cases(make_example):
+    from nemotron_data_forge.export import split_dataset
+
+    assert split_dataset([], 0.2) == ([], [])
+    one = _examples(make_example, 1)
+    assert split_dataset(one, 0.5) == (one, [])
+    ten = _examples(make_example, 10)
+    assert split_dataset(ten, 0.0)[1] == []
+    # Never leave train empty, even for a huge ratio.
+    train, val = split_dataset(_examples(make_example, 5), 0.99)
+    assert len(train) >= 1 and len(val) == 4

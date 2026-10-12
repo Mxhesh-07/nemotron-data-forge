@@ -12,7 +12,13 @@ import traceback
 import streamlit as st
 
 from nemotron_data_forge import config
-from nemotron_data_forge.export import dataset_card, quality_report
+from nemotron_data_forge.export import (
+    EXPORT_FORMATS,
+    dataset_card,
+    quality_report,
+    records_jsonl,
+    split_dataset,
+)
 from nemotron_data_forge.pipeline import run_pipeline
 
 
@@ -83,6 +89,19 @@ with st.sidebar:
         step=0.01,
         format="%.4f",
         help="Once estimated spend reaches this, new sources stop and optional phases are skipped.",
+    )
+    export_format = st.selectbox(
+        "Export format",
+        EXPORT_FORMATS,
+        help="Record layout for the downloaded dataset: alpaca, sharegpt, openai or raw.",
+    )
+    val_ratio = st.slider(
+        "Validation split",
+        0.0,
+        0.5,
+        0.0,
+        step=0.05,
+        help="Fraction of examples held out as a validation set for training.",
     )
 
     st.divider()
@@ -201,32 +220,17 @@ if result is not None:
     # --- Downloads ---
     st.divider()
     st.subheader("⬇️ Export")
-    jsonl_text = "\n".join(
-        json.dumps(
-            {
-                "instruction": ex.instruction,
-                "output": ex.response,
-                "input": "",
-                "source_url": ex.source_url,
-                "source_title": ex.source_title,
-                "topic": ex.topic,
-                "format": ex.format,
-                "scores": ex.scores,
-                "average_score": ex.average_score,
-            },
-            ensure_ascii=False,
-        )
-        for ex in result.examples
-    )
+    train_examples, val_examples = split_dataset(result.examples, val_ratio)
+    jsonl_text = records_jsonl(train_examples, export_format)
     report = quality_report(result.examples, result.rejected, stats, result.sources, manifest)
     card = dataset_card(stats.topic, stats, manifest)
     stamp = _dt.datetime.now().strftime("%Y%m%d-%H%M%S")
 
     d1, d2, d3 = st.columns(3)
     d1.download_button(
-        "⬇️ dataset.jsonl",
+        f"⬇️ train-{export_format}.jsonl ({len(train_examples)})",
         data=jsonl_text.encode("utf-8"),
-        file_name=f"dataset-{stamp}.jsonl",
+        file_name=f"train-{export_format}-{stamp}.jsonl",
         mime="application/json",
         use_container_width=True,
     )
@@ -244,6 +248,13 @@ if result is not None:
         mime="application/json",
         use_container_width=True,
     )
+    if val_examples:
+        st.download_button(
+            f"⬇️ val-{export_format}.jsonl ({len(val_examples)})",
+            data=records_jsonl(val_examples, export_format).encode("utf-8"),
+            file_name=f"val-{export_format}-{stamp}.jsonl",
+            mime="application/json",
+        )
     with st.expander("Preview quality report"):
         st.markdown(report)
     with st.expander("Preview Hugging Face dataset card"):

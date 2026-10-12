@@ -4,29 +4,82 @@ from __future__ import annotations
 
 import datetime as _dt
 import json
+import random
 from pathlib import Path
 
 from .schemas import Example, PipelineStats, RunManifest
 
+# Supported dataset record layouts for fine-tuning.
+EXPORT_FORMATS = ["alpaca", "sharegpt", "openai", "raw"]
 
-def to_jsonl(examples: list[Example], path: str | Path) -> Path:
+
+def _record(ex: Example, fmt: str = "alpaca") -> dict:
+    """Render one example in the requested fine-tuning format.
+
+    Every layout carries the same traceability metadata (source, scores) so the
+    dataset can always be audited back to a real web source.
+    """
+    if fmt == "sharegpt":
+        record: dict = {
+            "conversations": [
+                {"from": "human", "value": ex.instruction},
+                {"from": "gpt", "value": ex.response},
+            ]
+        }
+    elif fmt == "openai":
+        record = {
+            "messages": [
+                {"role": "user", "content": ex.instruction},
+                {"role": "assistant", "content": ex.response},
+            ]
+        }
+    elif fmt == "raw":
+        record = {"instruction": ex.instruction, "response": ex.response}
+    else:  # alpaca (default)
+        record = {"instruction": ex.instruction, "input": "", "output": ex.response}
+
+    record.update(
+        {
+            "source_url": ex.source_url,
+            "source_title": ex.source_title,
+            "topic": ex.topic,
+            "format": ex.format,
+            "scores": ex.scores,
+            "average_score": ex.average_score,
+        }
+    )
+    return record
+
+
+def records_jsonl(examples: list[Example], fmt: str = "alpaca") -> str:
+    """Return the examples as a JSONL string (used by the web UI downloads)."""
+    if fmt not in EXPORT_FORMATS:
+        raise ValueError(f"Unknown export format {fmt!r}. Choose one of {EXPORT_FORMATS}.")
+    lines = [json.dumps(_record(ex, fmt), ensure_ascii=False) for ex in examples]
+    return "\n".join(lines) + ("\n" if lines else "")
+
+
+def split_dataset(
+    examples: list[Example], val_ratio: float = 0.0, seed: int = 42
+) -> tuple[list[Example], list[Example]]:
+    """Deterministically split into (train, val).
+
+    ``val_ratio`` of 0 (or fewer than two examples) puts everything in train.
+    At least one example is always left in train.
+    """
+    if val_ratio <= 0 or len(examples) < 2:
+        return list(examples), []
+    shuffled = list(examples)
+    random.Random(seed).shuffle(shuffled)
+    n_val = min(max(1, round(len(shuffled) * val_ratio)), len(shuffled) - 1)
+    return shuffled[n_val:], shuffled[:n_val]
+
+
+def to_jsonl(examples: list[Example], path: str | Path, fmt: str = "alpaca") -> Path:
     """Write examples as newline-delimited JSON (fine-tuning ready)."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8") as fh:
-        for ex in examples:
-            record = {
-                "instruction": ex.instruction,
-                "output": ex.response,
-                "input": "",
-                "source_url": ex.source_url,
-                "source_title": ex.source_title,
-                "topic": ex.topic,
-                "format": ex.format,
-                "scores": ex.scores,
-                "average_score": ex.average_score,
-            }
-            fh.write(json.dumps(record, ensure_ascii=False) + "\n")
+    path.write_text(records_jsonl(examples, fmt), encoding="utf-8")
     return path
 
 

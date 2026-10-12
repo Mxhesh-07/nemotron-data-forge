@@ -32,7 +32,7 @@ treats dataset quality as the product:
   exponential backoff and jitter.
 - **Observable.** Every run writes a manifest with per-model token usage, an
   estimated USD cost, timings, and a list of any warnings.
-- **Tested.** 108 unit/integration tests run entirely offline against fakes, plus
+- **Tested.** 115 unit/integration tests run entirely offline against fakes, plus
   a render test for the Streamlit UI and a CI workflow.
 
 ---
@@ -92,6 +92,7 @@ format, and click **Generate dataset**. Download `dataset.jsonl`, the
 python -m nemotron_data_forge --topic "Indian tax law for freelancers" --format Q&A
 python -m nemotron_data_forge --topic "intro to vector databases" --demo
 python -m nemotron_data_forge --topic "..." --examples-per-source 4 --max-sources 6 --threshold 7.5
+python -m nemotron_data_forge --topic "..." --export-format sharegpt --val-ratio 0.1   # ShareGPT + val split
 python -m nemotron_data_forge --topic "..." --push-hf yourname/tax-freelancers-in   # optional HF push
 python -m nemotron_data_forge --topic "..." --manifest-json                         # machine-readable run manifest
 ```
@@ -109,23 +110,26 @@ Key flags:
 | `--concurrency` | `4` | Parallel model requests |
 | `--rewrite-rounds` | `1` | Rewrite-on-reject rounds (0 disables) |
 | `--max-usd` | `0` | Soft spend cap in USD for the run (0 = unlimited) |
+| `--export-format` | `alpaca` | Record layout: `alpaca`, `sharegpt`, `openai`, `raw` |
+| `--val-ratio` | `0` | Fraction held out as a validation split (e.g. `0.1`) |
 | `--demo` | off | Use bundled sample sources (no Tavily) |
 | `--no-embeddings` | off | Disable semantic de-duplication |
 | `--out` | `outputs/` | Output directory |
 | `--push-hf` | off | Push the dataset to a Hugging Face dataset repo |
 | `--manifest-json` | off | Print the run manifest as JSON to stdout |
 
-Outputs land in `outputs/` as `dataset-<stamp>.jsonl`,
-`quality-report-<stamp>.md`, `manifest-<stamp>.json` and
-`dataset-card-<stamp>.md`.
+Outputs land in `outputs/` as `dataset-<stamp>.jsonl` (plus `val-<stamp>.jsonl`
+when `--val-ratio` is set), `quality-report-<stamp>.md`, `manifest-<stamp>.json`
+and `dataset-card-<stamp>.md`.
 
 ---
 
 ## What you get
 
 - **`dataset.jsonl`** — instruction/response records ready for fine-tuning, each
-  with its `source_url`, scores and topic for traceability.
-  `samples/example-dataset.jsonl` shows the format.
+  with its `source_url`, scores and topic for traceability. Choose the record
+  layout with `--export-format`: **alpaca** (default), **sharegpt**, **openai**
+  chat, or **raw**. `samples/example-dataset.jsonl` shows the alpaca format.
 - **`quality-report.md`** — counts, average scores, per-model token usage,
   sources, and kept vs rejected examples with the reason each was rejected.
 - **`manifest.json`** — machine-readable record of the run: config, models,
@@ -200,7 +204,7 @@ uses the generated `outputs/dataset-*.jsonl`. Open
 
 ```bash
 pip install -e ".[dev]"
-pytest          # 108 tests, fully offline (fakes mock the models and search)
+pytest          # 115 tests, fully offline (fakes mock the models and search)
 ruff check .    # lint
 ```
 

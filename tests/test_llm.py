@@ -2,7 +2,6 @@
 
 from types import SimpleNamespace
 
-import httpx
 import openai
 import pytest
 
@@ -43,8 +42,30 @@ def test_extract_json_garbage_raises():
 
 
 # --- is_retryable ----------------------------------------------------------
-def _response(status: int) -> httpx.Response:
-    return httpx.Response(status, request=httpx.Request("POST", "https://api.example/v1"))
+# The OpenAI SDK builds its errors from an HTTP request/response pair whose
+# concrete type depends on the transport it depends on (httpx on 1.x, httpx2 on
+# 3.x). These minimal doubles keep the tests independent of that choice.
+class _FakeRequest:
+    method = "POST"
+    url = "https://api.example/v1"
+
+
+class _FakeResponse:
+    def __init__(self, status_code: int) -> None:
+        self.status_code = status_code
+        self.request = _FakeRequest()
+        self.headers: dict[str, str] = {}
+
+    @property
+    def text(self) -> str:
+        return ""
+
+    def json(self) -> dict:
+        return {}
+
+
+def _response(status: int) -> _FakeResponse:
+    return _FakeResponse(status)
 
 
 def test_is_retryable_rate_limit():
@@ -140,7 +161,7 @@ def test_embed_returns_none_on_failure():
     client = TokenFactoryClient(api_key="test-key", max_retries=1, sleep=lambda _s: None)
 
     def boom(**kwargs):
-        raise openai.APIConnectionError(request=httpx.Request("POST", "https://api.example/v1"))
+        raise openai.APIConnectionError(request=_FakeRequest())
 
     client._client = SimpleNamespace(embeddings=SimpleNamespace(create=boom))
     assert client.embed(["a", "b"]) is None

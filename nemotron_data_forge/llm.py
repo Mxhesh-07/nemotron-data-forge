@@ -173,6 +173,10 @@ class TokenFactoryClient:
         }
         if json_mode:
             kwargs["response_format"] = {"type": "json_object"}
+        if config.LLM_DISABLE_THINKING:
+            # NVIDIA Nemotron 3 chat template supports turning the reasoning
+            # trace off; keep responses short and JSON-safe.
+            kwargs["extra_body"] = {"chat_template_kwargs": {"enable_thinking": False}}
 
         def call():
             try:

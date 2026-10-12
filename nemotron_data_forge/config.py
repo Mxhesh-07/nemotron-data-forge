@@ -39,6 +39,13 @@ def _env_float(name: str, default: float) -> float:
         raise ConfigError(f"Environment variable {name}={raw!r} must be a number") from exc
 
 
+def _env_bool(name: str, default: bool) -> bool:
+    raw = os.getenv(name)
+    if raw is None or raw.strip() == "":
+        return default
+    return raw.strip().lower() in {"1", "true", "yes", "on"}
+
+
 # --- Provider --------------------------------------------------------------
 # "nebius" is the default and the runtime required for the hackathon
 # (Nebius Token Factory). "nvidia" points the same OpenAI-compatible client at
@@ -65,8 +72,8 @@ _PROVIDER_PRESETS: dict[str, dict[str, str]] = {
         "key_url": "https://build.nvidia.com",
         "generator": "nvidia/nemotron-3-super-120b-a12b",
         "grader": "nvidia/nemotron-3-ultra-550b-a55b",
-        "fast": "nvidia/nemotron-3-nano-30b-a3b",
-        "embedding": "nvidia/llama-3.2-nv-embedqa-1b-v2",
+        "fast": "nvidia/nemotron-3.5-lightning-30b-a3b",
+        "embedding": "nvidia/nemotron-3-embed-1b",
     },
 }
 
@@ -85,6 +92,11 @@ LLM_PROVIDER = _env("LLM_PROVIDER", "nebius").strip().lower()
 _PRESET = provider_settings(LLM_PROVIDER)
 LLM_KEY_ENV = _PRESET["key_env"]
 LLM_PROVIDER_LABEL = _PRESET["label"]
+
+# NVIDIA Nemotron 3 models "think" by default, which can spend the whole token
+# budget on a reasoning trace before the final JSON answer. Disable it by
+# default when using the NVIDIA fallback; override with LLM_DISABLE_THINKING.
+LLM_DISABLE_THINKING = _env_bool("LLM_DISABLE_THINKING", LLM_PROVIDER == "nvidia")
 
 # --- OpenAI-compatible endpoint (Nebius Token Factory by default) -----------
 NEBIUS_BASE_URL = _env("NEBIUS_BASE_URL", _PRESET["base_url"])

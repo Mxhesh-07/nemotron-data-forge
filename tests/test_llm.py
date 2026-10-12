@@ -151,3 +151,24 @@ def test_malformed_json_from_model_raises_response_error():
 
     with pytest.raises(LLMResponseError):
         ej("totally not json")
+
+
+def test_thinking_disabled_passes_chat_template_kwargs(monkeypatch):
+    from nemotron_data_forge import config
+
+    monkeypatch.setattr(config, "LLM_DISABLE_THINKING", True)
+    captured: dict = {}
+
+    class _Completions:
+        def create(self, **kwargs):
+            captured.update(kwargs)
+            return SimpleNamespace(
+                model="m",
+                usage=SimpleNamespace(prompt_tokens=1, completion_tokens=1),
+                choices=[SimpleNamespace(message=SimpleNamespace(content="hi"))],
+            )
+
+    client = TokenFactoryClient(api_key="test-key", max_retries=1, sleep=lambda _s: None)
+    client._client = SimpleNamespace(chat=SimpleNamespace(completions=_Completions()))
+    client.chat("m", [{"role": "user", "content": "hi"}])
+    assert captured["extra_body"] == {"chat_template_kwargs": {"enable_thinking": False}}

@@ -70,14 +70,11 @@ def test_cli_export_format_and_split(tmp_path):
         ]
     )
     assert code == 0
-    files = {p.name: p for p in Path(tmp_path).iterdir()}
-    dataset = next(p for n, p in files.items() if n.startswith("dataset-"))
-    val = next(p for n, p in files.items() if n.startswith("val-"))
+    dataset = next(tmp_path.glob("dataset-*.jsonl"))
+    val = next(tmp_path.glob("val-*.jsonl"))
     assert "messages" in json.loads(dataset.read_text(encoding="utf-8").splitlines()[0])
     assert "messages" in json.loads(val.read_text(encoding="utf-8").splitlines()[0])
-    manifest = json.loads(
-        next(p for n, p in files.items() if n.startswith("manifest-")).read_text(encoding="utf-8")
-    )
+    manifest = json.loads(next(tmp_path.glob("manifest-*.json")).read_text(encoding="utf-8"))
     assert manifest["config"]["export_format"] == "openai"
     assert manifest["config"]["val_ratio"] == 0.25
 

@@ -15,6 +15,19 @@ from nemotron_data_forge import config
 from nemotron_data_forge.export import dataset_card, quality_report
 from nemotron_data_forge.pipeline import run_pipeline
 
+
+def _secret(name: str, default: str = "") -> str:
+    """Read a key from Streamlit secrets (Cloud/Spaces), falling back to env."""
+    try:
+        value = st.secrets[name]
+    except Exception:  # no secrets.toml, or the key is missing
+        return default
+    return str(value) if value else default
+
+
+ENV_NEBIUS_KEY = _secret("NEBIUS_API_KEY", config.NEBIUS_API_KEY)
+ENV_TAVILY_KEY = _secret("TAVILY_API_KEY", config.TAVILY_API_KEY)
+
 st.set_page_config(page_title="Nemotron Data Forge", page_icon="🧪", layout="wide")
 
 st.title("🧪 Nemotron Data Forge")
@@ -28,19 +41,19 @@ with st.sidebar:
     st.header("🔑 API keys")
     nebius_key = st.text_input(
         "NEBIUS_API_KEY",
-        value=config.NEBIUS_API_KEY,
+        value=ENV_NEBIUS_KEY,
         type="password",
         help="From https://tokenfactory.nebius.com — required.",
     )
     tavily_key = st.text_input(
         "TAVILY_API_KEY",
-        value=config.TAVILY_API_KEY,
+        value=ENV_TAVILY_KEY,
         type="password",
         help="From https://tavily.com — required unless you use demo mode.",
     )
     demo_mode = st.checkbox(
         "Demo mode (use bundled sample sources)",
-        value=not bool(config.TAVILY_API_KEY),
+        value=not bool(ENV_TAVILY_KEY),
         help="Skip Tavily and use three bundled sample pages, so you can test without a Tavily key.",
     )
 

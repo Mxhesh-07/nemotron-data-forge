@@ -1,8 +1,6 @@
-# Core
+# Runtime requirements for the hosted demo (Streamlit Community Cloud / Spaces).
+# The library itself is installed from the repo root, so no extra install step.
 openai>=1.30.0
 requests>=2.31.0
 python-dotenv>=1.0.0
 streamlit>=1.30.0
-
-# Optional: push datasets to the Hugging Face Hub (CLI --push-hf)
-huggingface_hub>=0.23.0

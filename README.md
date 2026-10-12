@@ -211,6 +211,15 @@ end-to-end pipeline, exports, the CLI, and the Streamlit app render.
 
 ---
 
+## Hosted demo (for judges)
+
+The Streamlit app reads keys from host secrets, so it can be hosted for free for
+the judging window. See [`DEPLOY.md`](DEPLOY.md) for one-step deploys to
+**Streamlit Community Cloud** or **Hugging Face Spaces**, including the `st.secrets`
+keys to set and a `DEFAULT_MAX_USD` spend cap for a public demo.
+
+---
+
 ## Running at scale on Nebius Serverless Jobs
 
 A `Dockerfile` is included so the same pipeline can run as a background job

@@ -102,8 +102,24 @@ class FakeClient:
             return self._grade(text)
         return self._generate(text)
 
-    def chat(self, model: str, messages, **kwargs) -> str:  # pragma: no cover - unused
-        return ""
+    def chat(self, model: str, messages, **kwargs) -> str:
+        text = "\n".join(m.get("content", "") for m in messages)
+        with self._lock:
+            self.calls.append((model, text))
+        if self.fail_marker and self.fail_marker in text:
+            raise RuntimeError(f"fake failure for marker {self.fail_marker!r}")
+        self.usage.add(model, prompt_tokens=5, completion_tokens=2)
+        return "ok"
+
+    def list_models(self) -> list[str]:
+        from nemotron_data_forge import config
+
+        return [
+            config.GENERATOR_MODEL,
+            config.GRADER_MODEL,
+            config.EMBEDDING_MODEL,
+            config.FAST_MODEL,
+        ]
 
     def embed(self, texts, model: str | None = None):
         self.usage.add(model or "embeddings", prompt_tokens=len(texts), completion_tokens=0)

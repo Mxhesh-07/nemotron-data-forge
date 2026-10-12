@@ -32,7 +32,7 @@ treats dataset quality as the product:
   exponential backoff and jitter.
 - **Observable.** Every run writes a manifest with per-model token usage, an
   estimated USD cost, timings, and a list of any warnings.
-- **Tested.** 115 unit/integration tests run entirely offline against fakes, plus
+- **Tested.** 121 unit/integration tests run entirely offline against fakes, plus
   a render test for the Streamlit UI and a CI workflow.
 
 ---
@@ -83,12 +83,25 @@ format, and click **Generate dataset**. Download `dataset.jsonl`, the
   sample sources and exercise the whole pipeline offline. The Tavily bonus
   requires running in normal mode with a real key.
 
+Once your keys are in `.env`, verify everything end to end with a few cheap live
+calls before running a full job:
+
+```bash
+python -m nemotron_data_forge --check
+# [PASS] NEBIUS_API_KEY present
+# [PASS] List models - 42 available
+# [PASS] generator model available - nvidia/Nemotron-3-Super-120b-a12b
+# ...
+# [PASS] Tavily search round-trip - 1 result(s)
+```
+
 ---
 
 ## Command line (headless / for Serverless Jobs)
 
 ```bash
 # Entry point is installed as `dataforge`, or use `python -m nemotron_data_forge`.
+python -m nemotron_data_forge --check              # verify keys, models and connectivity
 python -m nemotron_data_forge --topic "Indian tax law for freelancers" --format Q&A
 python -m nemotron_data_forge --topic "intro to vector databases" --demo
 python -m nemotron_data_forge --topic "..." --examples-per-source 4 --max-sources 6 --threshold 7.5
@@ -101,6 +114,7 @@ Key flags:
 
 | Flag | Default | Meaning |
 | --- | --- | --- |
+| `--check` | off | Verify keys, model access and connectivity, then exit |
 | `--topic` | config default | Topic to build the dataset for |
 | `--format` | `Q&A` | `Q&A`, `Chat`, or `Reasoning` |
 | `--examples-per-source` | `3` | Examples requested per source |
@@ -153,6 +167,7 @@ nemotron_data_forge/pipeline.py            orchestration, concurrency, manifest
   ├── llm.py          Token Factory client: retries, JSON repair, usage
   ├── validation.py   length/emptiness checks and score clamping
   ├── usage.py        thread-safe token/cost accounting
+  ├── doctor.py       `--check`: keys, model access and connectivity
   └── config.py       env-driven settings + validation
 ```
 
@@ -204,7 +219,7 @@ uses the generated `outputs/dataset-*.jsonl`. Open
 
 ```bash
 pip install -e ".[dev]"
-pytest          # 115 tests, fully offline (fakes mock the models and search)
+pytest          # 121 tests, fully offline (fakes mock the models and search)
 ruff check .    # lint
 ```
 

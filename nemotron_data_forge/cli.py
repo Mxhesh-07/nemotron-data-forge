@@ -33,6 +33,11 @@ def build_parser() -> argparse.ArgumentParser:
         "NVIDIA Nemotron on Nebius Token Factory.",
     )
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="Verify keys, model access and connectivity with cheap live calls, then exit.",
+    )
     parser.add_argument("--topic", default=config.DEFAULT_TOPIC, help="Topic to build a dataset for.")
     parser.add_argument(
         "--format", default=config.DEFAULT_FORMAT, choices=config.VALID_FORMATS, help="Example format."
@@ -84,9 +89,33 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _make_stdout_unicode_safe() -> None:
+    """Avoid UnicodeEncodeError on legacy consoles (e.g. Windows cp1252)."""
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]
+        except Exception:  # pragma: no cover - stream not reconfigurable (e.g. under test)
+            pass
+
+
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
+    _make_stdout_unicode_safe()
     configure_logging("WARNING" if args.quiet else args.log_level)
+
+    if args.check:
+        from .doctor import check_environment
+
+        checks = check_environment(run_search=not args.demo, require_tavily=not args.demo)
+        all_ok = True
+        for check in checks:
+            if not check.ok:
+                all_ok = False
+            mark = "PASS" if check.ok else "FAIL"
+            detail = f" - {check.detail}" if check.detail else ""
+            print(f"[{mark}] {check.name}{detail}")
+        print("\nAll checks passed." if all_ok else "\nSome checks failed.")
+        return 0 if all_ok else 1
 
     if args.examples_per_source < 1 or args.max_sources < 1:
         logger.error("--examples-per-source and --max-sources must be >= 1")

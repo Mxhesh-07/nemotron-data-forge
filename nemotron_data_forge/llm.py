@@ -228,6 +228,12 @@ class TokenFactoryClient:
         repaired = self.chat(model, repair_messages, temperature=0.0, max_tokens=max_tokens, json_mode=False)
         return extract_json(repaired)
 
+    def list_models(self) -> list[str]:
+        """Return the model IDs the Token Factory account can access."""
+        response = self._run_with_retries(lambda: self._client.models.list(), "models.list")
+        items = getattr(response, "data", response) or []
+        return [mid for item in items if (mid := getattr(item, "id", None))]
+
     def embed(self, texts: list[str], model: str | None = None) -> list[list[float]] | None:
         """Return embeddings, or None if the endpoint is unavailable."""
         if not texts:

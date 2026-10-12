@@ -1,0 +1,74 @@
+{
+  "app": "nemotron-data-forge",
+  "version": "0.1.0",
+  "started_at": "2026-10-12T23:14:34",
+  "finished_at": "2026-10-12T23:14:49",
+  "duration_seconds": 14.9,
+  "config": {
+    "examples_per_source": 3,
+    "max_sources": 4,
+    "keep_threshold": 7.0,
+    "min_axis_score": 5.0,
+    "dedupe_threshold": 0.82,
+    "use_embeddings": true,
+    "max_concurrency": 4,
+    "max_rewrite_rounds": 1,
+    "max_usd": 0.0,
+    "sample_sources": false,
+    "export_format": "alpaca",
+    "val_ratio": 0.1,
+    "train_examples": 8,
+    "val_examples": 1
+  },
+  "usage": {
+    "nvidia/nemotron-3-super-120b-a12b": {
+      "calls": 4,
+      "prompt_tokens": 1969,
+      "completion_tokens": 787,
+      "total_tokens": 2756
+    },
+    "nvidia/nemotron-3-ultra-550b-a55b": {
+      "calls": 4,
+      "prompt_tokens": 2594,
+      "completion_tokens": 704,
+      "total_tokens": 3298
+    },
+    "nvidia/nemotron-3-embed-1b": {
+      "calls": 1,
+      "prompt_tokens": 643,
+      "completion_tokens": 0,
+      "total_tokens": 643
+    }
+  },
+  "estimated_cost_usd": 0.0,
+  "total_tokens": 6697,
+  "budget_usd": 0.0,
+  "budget_hit": false,
+  "sources": [
+    {
+      "title": "Income Tax Filing For the Freelancers | Policybazaar",
+      "url": "https://www.policybazaar.com/income-tax/income-tax-filing-for-freelancers",
+      "content": "From a legal and taxation standpoint, freelancing income falls under the category of \"Profits and Gains from Business or Profession\" according to income tax laws in India. This classification recognizes the unique nature of freelancing work, acknowledging that individuals are essentially operating as independent professionals or businesses. As a result, the income generated from freelancing activities is subject to taxation, and freelancers are required to fulfill their tax obligations in [...] Tax Deducted at Source (TDS) is a concept in Indian taxation where a certain amount of tax is deducted from the source of income before the payment is made to the recipient. This is done to ensure that the recipient pays the due tax on their income. TDS is applicable to both salaried individuals and freelancers. The clients often deduct the TDS when they make payments to a freelancer. You can claim the TDS for freelancer deductions, when filing the ITR form, and save money. [...] | Section 80 CCG | The section provides a maximum deduction of Rs 25,000 for the investments made in the government Equity Saving Schemes, to certain specified Indian citizens and residents |\n| Section 80 D | Under this section, expenses made towards the payment of premiums of the health insurance policies are exempted. The  freelancer can also buy the policy for a spouse or child, and claim the deductions |",
+      "score": 0.8914433
+    },
+    {
+      "title": "Freelance and taxes: India | Mellow",
+      "url": "https://help.mellow.io/en/articles/9134949-freelance-and-taxes-india",
+      "content": "1. Section 44AD sets out a PTS for small businesses with an annual income of INR 20 million or below. Under that arrangement, the tax amounts to 8% of annual turnover (6% if all transactions were made digitally). [...] Mellow\n\n# Freelance and taxes: India\n\nGeneral info about the country's taxation and tax reporting\n\nTable of contents\n\nBecause freelancers are not our employees and we don't pay taxes on payouts, they must declare any income received through Mellow by themselves.\n\nTo carry on tax accounting in India for your Mellow income, you need to:\n\n Be a tax resident\n Register at the tax office\n Determine the applicable tax obligations\n\n# Tax residence [...] 2. Section 44ADA regulates PTS for professional income (not applicable to income from entrepreneurial activity) not exceeding INR 5 million per year. It allows the taxpayer to pay tax on 50% of the actual income (the state will deem the other 50% expenses) using a standard progressive rate.\n3. Section 44AE is on PTS for goods carriage entities operating no more than 10 vehicles. It provides for a monthly tax of INR 7,500 per vehicle.",
+      "score": 0.80735475
+    },
+    {
+      "title": "Freelancer Income Tax in India: A Practical Guide",
+      "url": "https://www.xflowpay.com/blog/freelancer-income-tax-india",
+      "content": "## Do foreign clients deduct TDS on payments to Indian freelancers?\n\nNo. Only Indian payers who are liable to deduct do so. When an Indian company pays a freelancer for professional services, it typically deducts 10% TDS under Section 194J (20% if you have not given a PAN). You claim that credit when filing. [...] Under the new tax regime for FY2025-26, the basic exemption limit is ₹4 lakh, and the Section 87A rebate lifts the effective zero-tax ceiling to ₹12 lakh of taxable income for resident individuals.\n\nSo a freelancer whose taxable profit stays at or below ₹12 lakh can end up with no income tax under the new regime, subject to meeting the conditions. Above that, slab rates apply on the full taxable income. [...] ## Simple enough for freelancers. Powerful enough for enterprises.\n\n## Frequently asked questions\n\nYes. Freelance earnings are taxable as business income (PGBP) once total income crosses the basic exemption limit. You file a return and, if liability exceeds ₹10,000, pay advance tax during the year.\n\nUnder the FY2025-26 new regime, taxable income up to ₹12 lakh can attract nil tax after the Section 87A rebate. This is income after expenses or the 44ADA presumption, not gross receipts.",
+      "score": 0.7992077
+    },
+    {
+      "title": "How Gig Workers & Freelancers Are Taxed in India ?",
+      "url": "https://www.kotaklife.com/insurance-guide/savingstax/tax-obligations-for-freelancers-and-gig-economy-professionals",
+      "content": "Every Indian earning more than ₹3,00,000 is liable to pay income tax annually. This similar rule is applicable to freelancers and gig workers. You must refer to the following table to understand the tax slabs for freelancers and gig workers under New Tax Regime: [...] TDS is the amount deducted from payments such as salary, commission, rent, interest, or professional fees. The person who gets the payment at the point of sale, must pay the tax. This minimises tax evasion as the tax is collected at the moment of payment. While submitting ITR, freelancers can claim the deducted TDS and obtain information from Form 26AS. In addition, TDS is deducted at the rate of 10%, and freelancers can only deduct TDS if they have been audited for the last financial year. [...] financial year. However, freelancers can only be audited if the annual gross receipt exceeds ₹50 lakhs, and TDS won’t be applicable in such a scenario.",
+      "score": 0.78393924
+    }
+  ],
+  "errors": []
+}

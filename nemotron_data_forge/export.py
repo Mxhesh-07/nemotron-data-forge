@@ -7,6 +7,7 @@ import json
 import random
 from pathlib import Path
 
+from . import config
 from .schemas import Example, PipelineStats, RunManifest
 
 # Supported dataset record layouts for fine-tuning.
@@ -181,19 +182,23 @@ def save_text(text: str, path: str | Path) -> Path:
 def dataset_card(topic: str, stats: PipelineStats, manifest: RunManifest) -> str:
     """Return a minimal Hugging Face dataset card (YAML front matter + body)."""
     safe_topic = topic.replace('"', "'")
+    tags = ["nvidia-nemotron"]
+    if config.LLM_PROVIDER == "nebius":
+        tags.append("nebius-token-factory")
+    tags.append("synthetic")
     front = (
         "---\n"
-        f"license: mit\n"
-        f"task_categories:\n  - text-generation\n"
-        f"language:\n  - en\n"
-        f"tags:\n  - nvidia-nemotron\n  - nebius-token-factory\n  - synthetic\n"
+        "license: mit\n"
+        "task_categories:\n  - text-generation\n"
+        "language:\n  - en\n"
+        "tags:\n" + "".join(f"  - {tag}\n" for tag in tags) +
         f"pretty_name: \"{safe_topic} synthetic instructions\"\n"
         "---\n"
     )
     body = (
         f"\n# {topic} — synthetic instruction dataset\n\n"
         f"Generated with NVIDIA Nemotron 3 Super (generation) and Nemotron 3 Ultra "
-        f"(grading) on Nebius Token Factory, using web sources found by Tavily.\n\n"
+        f"(grading) on {config.LLM_PROVIDER_LABEL}, using web sources found by Tavily.\n\n"
         f"- Examples kept: {stats.kept}\n"
         f"- Avg accuracy / helpfulness / clarity: "
         f"{stats.avg_accuracy} / {stats.avg_helpfulness} / {stats.avg_clarity}\n"

@@ -66,6 +66,24 @@ def test_dataset_card_has_front_matter():
     assert "Indian tax law" in card
 
 
+def test_dataset_card_reflects_provider(monkeypatch):
+    from nemotron_data_forge import config
+
+    stats = PipelineStats(topic="tax", kept=3)
+
+    monkeypatch.setattr(config, "LLM_PROVIDER", "nvidia")
+    monkeypatch.setattr(config, "LLM_PROVIDER_LABEL", "NVIDIA NIM (development fallback)")
+    card = dataset_card("Indian tax law", stats, RunManifest())
+    assert "on NVIDIA NIM (development fallback)" in card
+    assert "nebius-token-factory" not in card
+
+    monkeypatch.setattr(config, "LLM_PROVIDER", "nebius")
+    monkeypatch.setattr(config, "LLM_PROVIDER_LABEL", "Nebius Token Factory")
+    card = dataset_card("Indian tax law", stats, RunManifest())
+    assert "on Nebius Token Factory" in card
+    assert "nebius-token-factory" in card
+
+
 def test_save_text_and_json(tmp_path):
     p1 = save_text("hello", tmp_path / "sub" / "a.txt")
     p2 = save_json({"a": 1}, tmp_path / "sub" / "b.json")

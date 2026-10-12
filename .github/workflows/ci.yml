@@ -23,5 +23,7 @@ jobs:
           pip install -e ".[dev]"
       - name: Lint with ruff
         run: ruff check .
+      - name: Validate the fine-tune sample dataset
+        run: python -m finetune.train_lora --dataset finetune/sample_dataset.jsonl --check
       - name: Run tests
         run: pytest

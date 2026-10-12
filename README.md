@@ -32,7 +32,7 @@ treats dataset quality as the product:
   exponential backoff and jitter.
 - **Observable.** Every run writes a manifest with per-model token usage, an
   estimated USD cost, timings, and a list of any warnings.
-- **Tested.** 71 unit/integration tests run entirely offline against fakes, plus
+- **Tested.** 97 unit/integration tests run entirely offline against fakes, plus
   a render test for the Streamlit UI and a CI workflow.
 
 ---
@@ -168,11 +168,35 @@ nemotron_data_forge/pipeline.py            orchestration, concurrency, manifest
 
 ---
 
+## Before/after fine-tuning demo
+
+To prove the dataset is actually useful, `finetune/` fine-tunes a small base
+model on it and compares answers **before** vs **after** — on a free Colab T4,
+with **no API keys**. See [`finetune/README.md`](finetune/README.md).
+
+```bash
+# Validate any dataset with no heavy dependencies:
+python -m finetune.train_lora --dataset finetune/sample_dataset.jsonl --check
+
+# Train LoRA + generate the before/after report:
+python -m finetune.train_lora --dataset outputs/dataset-<stamp>.jsonl \
+  --base-model Qwen/Qwen2.5-0.5B-Instruct --epochs 3 --out finetune_output
+```
+
+It writes `finetune_output/before_after.md` (side-by-side answers plus offline
+metrics: token-F1 vs reference, keyword recall, length closeness, format
+adherence). The bundled `finetune/sample_dataset.jsonl` is a clearly-labelled
+Python-fundamentals fixture used only to exercise the notebook; the real demo
+uses the generated `outputs/dataset-*.jsonl`. Open
+`finetune/colab_before_after.ipynb` in Colab to run it end to end.
+
+---
+
 ## Testing & CI
 
 ```bash
 pip install -e ".[dev]"
-pytest          # 71 tests, fully offline (fakes mock the models and search)
+pytest          # 97 tests, fully offline (fakes mock the models and search)
 ruff check .    # lint
 ```
 
@@ -225,8 +249,8 @@ base URL, pipeline defaults (topic, format, counts, thresholds), and limits
 
 ## Roadmap
 
+- [x] Before/after demo: fine-tune a small model on the dataset to prove quality
 - [ ] Rewrite step: re-generate examples the grader rejects (instead of dropping)
-- [ ] Before/after demo: fine-tune a small model on the dataset to prove quality
 - [ ] Stream progress from a Serverless Job back to the UI
 
 ## License

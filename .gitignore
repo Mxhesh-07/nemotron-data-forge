@@ -11,6 +11,7 @@ env/
 
 # Outputs
 outputs/
+finetune_output/
 
 # Streamlit
 .streamlit/secrets.toml

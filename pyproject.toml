@@ -25,13 +25,20 @@ dependencies = [
 
 [project.optional-dependencies]
 hf = ["huggingface_hub>=0.23.0"]
+finetune = [
+    "torch>=2.1",
+    "transformers>=4.40",
+    "peft>=0.10",
+    "datasets>=2.18",
+    "accelerate>=0.30",
+]
 dev = ["pytest>=8.0", "ruff>=0.5"]
 
 [project.scripts]
 dataforge = "nemotron_data_forge.cli:main"
 
 [tool.setuptools]
-packages = ["nemotron_data_forge"]
+packages = ["nemotron_data_forge", "finetune"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

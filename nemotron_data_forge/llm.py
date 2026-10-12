@@ -26,6 +26,7 @@ from openai import (
 from . import config
 from .errors import LLMError, LLMResponseError
 from .logging_utils import get_logger
+from .pricing import has_price
 from .usage import UsageTracker
 
 logger = get_logger(__name__)
@@ -141,11 +142,16 @@ class TokenFactoryClient:
                 self._sleep(delay)
         raise LLMError(f"{description} failed after {self.max_retries} attempts: {last_exc}")
 
-    def _record_usage(self, response) -> None:
+    def _record_usage(self, response, requested_model: str) -> None:
         usage = getattr(response, "usage", None)
-        model = getattr(response, "model", None) or "unknown"
         if usage is None:
             return
+        model = getattr(response, "model", None) or requested_model
+        # Providers sometimes echo an alias/versioned id we have no price for.
+        # Fall back to the requested model so cost accounting stays meaningful
+        # instead of silently dropping to $0.
+        if not has_price(model) and has_price(requested_model):
+            model = requested_model
         self.usage.add(
             model,
             getattr(usage, "prompt_tokens", 0) or 0,
@@ -195,7 +201,7 @@ class TokenFactoryClient:
                 return self._client.chat.completions.create(**kwargs)
 
         response = self._run_with_retries(call, f"chat({model})")
-        self._record_usage(response)
+        self._record_usage(response, model)
         if not response.choices:
             return ""
         choice = response.choices[0]

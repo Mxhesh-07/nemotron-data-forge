@@ -92,3 +92,16 @@ def test_non_numeric_score_defaults_to_zero(monkeypatch):
     monkeypatch.setattr(search_module.requests, "post", lambda *a, **k: _Resp(200, payload))
     sources = search_module.tavily_search("tax", api_key="key", sleep=lambda _s: None)
     assert [s.score for s in sources] == [0.0, 0.0]
+
+
+def test_duplicate_urls_are_dropped(monkeypatch):
+    payload = {
+        "results": [
+            {"title": "A", "url": "https://a.com", "content": "first", "score": 0.9},
+            {"title": "A again", "url": "https://a.com", "content": "second", "score": 0.8},
+            {"title": "B", "url": "https://b.com", "content": "b", "score": 0.7},
+        ]
+    }
+    monkeypatch.setattr(search_module.requests, "post", lambda *a, **k: _Resp(200, payload))
+    sources = search_module.tavily_search("tax", api_key="key", sleep=lambda _s: None)
+    assert [s.url for s in sources] == ["https://a.com", "https://b.com"]

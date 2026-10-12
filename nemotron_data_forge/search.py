@@ -86,11 +86,13 @@ def _backoff(attempt: int, retries: int, sleep: Callable[[float], None], message
 
 def _parse_results(data: dict) -> list[Source]:
     sources: list[Source] = []
+    seen_urls: set[str] = set()
     for item in (data or {}).get("results", []) or []:
         content = (item.get("content") or "").strip()
         url = (item.get("url") or "").strip()
-        if not content or not url:
+        if not content or not url or url in seen_urls:
             continue
+        seen_urls.add(url)
         try:
             score = float(item.get("score") or 0.0)
         except (TypeError, ValueError):

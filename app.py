@@ -165,12 +165,19 @@ result = st.session_state.get("result")
 if result is not None:
     stats = result.stats
     manifest = result.manifest
+    train_examples, val_examples = split_dataset(result.examples, val_ratio)
+    # Record the export choices so the downloaded manifest matches the files,
+    # exactly as the CLI does.
+    manifest.config["export_format"] = export_format
+    manifest.config["val_ratio"] = val_ratio
+    manifest.config["train_examples"] = len(train_examples)
+    manifest.config["val_examples"] = len(val_examples)
     st.success(f"Done — kept **{stats.kept}** of {stats.generated} generated examples.")
     st.divider()
 
     c1, c2, c3, c4, c5 = st.columns(5)
     c1.metric("Kept", stats.kept)
-    c2.metric("Rejected", stats.rejected)
+    c2.metric("Not kept", stats.rejected)
     c3.metric("Duplicates removed", stats.duplicates_removed)
     c4.metric("Recovered by rewrite", stats.recovered)
     c5.metric("Est. cost (USD)", f"${manifest.estimated_cost_usd:.4f}")
@@ -186,7 +193,7 @@ if result is not None:
             for err in manifest.errors:
                 st.write(f"- {err}")
     tab_kept, tab_rejected, tab_sources, tab_manifest = st.tabs(
-        ["✅ Kept", "❌ Rejected", "🔗 Sources", "📋 Run manifest"]
+        ["✅ Kept", "❌ Not kept", "🔗 Sources", "📋 Run manifest"]
     )
 
     with tab_kept:
@@ -203,7 +210,7 @@ if result is not None:
 
     with tab_rejected:
         if not result.rejected:
-            st.info("Nothing was rejected. 🎉")
+            st.info("Nothing was dropped. 🎉")
         for i, ex in enumerate(result.rejected, 1):
             with st.expander(f"{i}. {ex.instruction}  ·  avg {ex.average_score}"):
                 st.write(ex.response)
@@ -220,7 +227,6 @@ if result is not None:
     # --- Downloads ---
     st.divider()
     st.subheader("⬇️ Export")
-    train_examples, val_examples = split_dataset(result.examples, val_ratio)
     jsonl_text = records_jsonl(train_examples, export_format)
     report = quality_report(result.examples, result.rejected, stats, result.sources, manifest)
     card = dataset_card(stats.topic, stats, manifest)

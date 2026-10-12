@@ -32,7 +32,7 @@ treats dataset quality as the product:
   exponential backoff and jitter.
 - **Observable.** Every run writes a manifest with per-model token usage, an
   estimated USD cost, timings, and a list of any warnings.
-- **Tested.** 131 unit/integration tests run entirely offline against fakes, plus
+- **Tested.** 143 unit/integration tests run entirely offline against fakes, plus
   a render test for the Streamlit UI and a CI workflow.
 
 ---
@@ -166,7 +166,8 @@ and `dataset-card-<stamp>.md`.
   layout with `--export-format`: **alpaca** (default), **sharegpt**, **openai**
   chat, or **raw**. `samples/example-dataset.jsonl` shows the alpaca format.
 - **`quality-report.md`** — counts, average scores, per-model token usage,
-  sources, and kept vs rejected examples with the reason each was rejected.
+  sources, and kept vs dropped examples (including near-duplicates) with the
+  reason each was dropped.
 - **`manifest.json`** — machine-readable record of the run: config, models,
   token usage, estimated cost, duration, sources and warnings.
 - **`dataset-card.md`** — a Hugging Face-ready dataset card (YAML front matter).
@@ -240,7 +241,7 @@ uses the generated `outputs/dataset-*.jsonl`. Open
 
 ```bash
 pip install -e ".[dev]"
-pytest          # 131 tests, fully offline (fakes mock the models and search)
+pytest          # 143 tests, fully offline (fakes mock the models and search)
 ruff check .    # lint
 ```
 

@@ -17,6 +17,11 @@ MODEL_PRICES: dict[str, tuple[float, float]] = {
 }
 
 
+def has_price(model: str) -> bool:
+    """Return True when a price is known for the model."""
+    return model in MODEL_PRICES
+
+
 def estimate_cost(model: str, prompt_tokens: int, completion_tokens: int) -> float:
     """Return the estimated USD cost for a single model's token usage."""
     price_in, price_out = MODEL_PRICES.get(model, (0.0, 0.0))

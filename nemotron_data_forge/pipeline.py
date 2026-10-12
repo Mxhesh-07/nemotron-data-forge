@@ -283,7 +283,7 @@ def run_pipeline(
     kept = dedupe(candidates, threshold=config.DEFAULT_DEDUPE_THRESHOLD, embeddings=embeddings)
     stats.duplicates_removed = len(candidates) - len(kept)
 
-    rejected = [e for e in generated if e.verdict != "kept"]
+    rejected = [e for e in generated if e.verdict != "kept"]  # includes near-duplicates
 
     # --- 5. Stats + report -------------------------------------------------
     progress(96.0, "Building quality report...")

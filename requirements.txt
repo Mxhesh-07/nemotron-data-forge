@@ -1,6 +1,8 @@
-# Runtime requirements for the hosted demo (Streamlit Community Cloud / Spaces).
-# The library itself is installed from the repo root, so no extra install step.
-openai>=1.30.0
-requests>=2.31.0
-python-dotenv>=1.0.0
-streamlit>=1.30.0
+# Runtime requirements for the hosted demo (Streamlit Community Cloud / Spaces)
+# and the Docker image. Pinned to the exact versions this project is tested
+# against so the judged demo installs reproducibly. The library itself is
+# installed from the repo root, so no extra install step is needed.
+openai==1.109.1
+requests==2.32.5
+python-dotenv==1.2.3
+streamlit==1.65.0

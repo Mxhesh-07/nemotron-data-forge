@@ -151,6 +151,25 @@ def test_usage_recorded():
     assert client.usage.total_tokens() == 7
 
 
+def test_usage_falls_back_to_requested_model_for_unpriced_alias():
+    """Providers may echo a versioned alias we have no price for."""
+
+    class _Completions:
+        def create(self, **kwargs):
+            return SimpleNamespace(
+                model=f"{kwargs['model']}:free",
+                usage=SimpleNamespace(prompt_tokens=5, completion_tokens=6),
+                choices=[SimpleNamespace(message=SimpleNamespace(content="hi"))],
+            )
+
+    client = TokenFactoryClient(api_key="test-key", max_retries=1, sleep=lambda _s: None)
+    client._client = SimpleNamespace(chat=SimpleNamespace(completions=_Completions()))
+    client.chat("nvidia/Nemotron-3-Super-120b-a12b", [{"role": "user", "content": "hi"}])
+    assert "nvidia/Nemotron-3-Super-120b-a12b" in client.usage.as_dict()
+    assert client.usage.total_tokens() == 11
+    assert client.usage.total_cost_usd() > 0
+
+
 def test_chat_json_repairs_non_json():
     client, completions = _client_with(["not json", "still not json", '{"fixed": true}'])
     assert client.chat_json("m", [{"role": "user", "content": "hi"}]) == {"fixed": True}

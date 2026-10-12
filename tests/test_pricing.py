@@ -1,6 +1,11 @@
 """Tests for the cost estimator used by the budget cap and manifest."""
 
-from nemotron_data_forge.pricing import estimate_cost
+from nemotron_data_forge.pricing import estimate_cost, has_price
+
+
+def test_has_price_distinguishes_known_models():
+    assert has_price("nvidia/Nemotron-3-Super-120b-a12b") is True
+    assert has_price("some/unknown-model") is False
 
 
 def test_nebius_models_are_priced():

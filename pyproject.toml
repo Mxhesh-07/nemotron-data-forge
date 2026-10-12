@@ -17,10 +17,10 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "openai>=1.30.0",
-    "requests>=2.31.0",
-    "python-dotenv>=1.0.0",
-    "streamlit>=1.30.0",
+    "openai>=1.30.0,<4",
+    "requests>=2.31.0,<3",
+    "python-dotenv>=1.0.0,<2",
+    "streamlit>=1.30.0,<2",
 ]
 
 [project.optional-dependencies]

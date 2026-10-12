@@ -79,9 +79,10 @@ format, and click **Generate dataset**. Download `dataset.jsonl`, the
 - **NEBIUS_API_KEY** — from <https://tokenfactory.nebius.com> (Get API key).
 - **TAVILY_API_KEY** — from <https://tavily.com>. The **Nebius Builder Program**
   (<https://dev.nebius.com/builders>) includes $25 of Tavily credit.
-- No Tavily key yet? Tick **Demo mode** in the sidebar to use three bundled
-  sample sources and exercise the whole pipeline offline. The Tavily bonus
-  requires running in normal mode with a real key.
+- No Tavily key yet? Tick **Demo mode** in the sidebar or pass `--demo` to use
+  three bundled sample sources instead of live search — you still need a Nebius
+  key for generation and grading. The Tavily bonus requires running in normal
+  mode with a real key.
 
 Once your keys are in `.env`, verify everything end to end with a few cheap live
 calls before running a full job:

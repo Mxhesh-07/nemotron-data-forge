@@ -31,7 +31,7 @@ def _secret(name: str, default: str = "") -> str:
     return str(value) if value else default
 
 
-ENV_NEBIUS_KEY = _secret("NEBIUS_API_KEY", config.NEBIUS_API_KEY)
+ENV_LLM_KEY = _secret(config.LLM_KEY_ENV, config.NEBIUS_API_KEY)
 ENV_TAVILY_KEY = _secret("TAVILY_API_KEY", config.TAVILY_API_KEY)
 
 st.set_page_config(page_title="Nemotron Data Forge", page_icon="🧪", layout="wide")
@@ -46,10 +46,10 @@ st.caption(
 with st.sidebar:
     st.header("🔑 API keys")
     nebius_key = st.text_input(
-        "NEBIUS_API_KEY",
-        value=ENV_NEBIUS_KEY,
+        config.LLM_KEY_ENV,
+        value=ENV_LLM_KEY,
         type="password",
-        help="From https://tokenfactory.nebius.com — required.",
+        help=f"From {config.LLM_PROVIDER_LABEL} — required.",
     )
     tavily_key = st.text_input(
         "TAVILY_API_KEY",
@@ -105,7 +105,7 @@ with st.sidebar:
     )
 
     st.divider()
-    with st.expander("Models used"):
+    with st.expander(f"Models used ({config.LLM_PROVIDER_LABEL})"):
         st.code(
             f"generator:  {config.GENERATOR_MODEL}\n"
             f"grader:     {config.GRADER_MODEL}\n"
@@ -123,7 +123,7 @@ run = st.button("🚀 Generate dataset", type="primary", use_container_width=Tru
 
 if run:
     if not nebius_key:
-        st.error("Please provide a NEBIUS_API_KEY in the sidebar.")
+        st.error(f"Please provide a {config.LLM_KEY_ENV} in the sidebar.")
         st.stop()
     if not demo_mode and not tavily_key:
         st.error("Please provide a TAVILY_API_KEY, or enable Demo mode.")

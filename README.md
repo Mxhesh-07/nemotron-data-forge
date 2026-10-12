@@ -84,6 +84,26 @@ format, and click **Generate dataset**. Download `dataset.jsonl`, the
   key for generation and grading. The Tavily bonus requires running in normal
   mode with a real key.
 
+#### Development fallback provider (not for submission)
+
+Nebius Token Factory requires a bank card to finish onboarding, which can block
+development. For local testing only, set `LLM_PROVIDER=nvidia` to point the same
+OpenAI-compatible client at NVIDIA's free NIM trial endpoint
+(<https://build.nvidia.com>, key `NVIDIA_API_KEY`, no card required). The app
+then runs the real Nemotron 3 models end to end:
+
+```dotenv
+LLM_PROVIDER=nvidia
+NVIDIA_API_KEY=nvapi-...
+```
+
+This is a **development convenience only** — the hackathon submission must run
+on Nebius Token Factory, so the recorded demo and the graded run use the default
+`LLM_PROVIDER=nebius`. Switching providers is a one-line change; model IDs and
+the base URL are configurable per provider via `config.py` presets and the
+`GENERATOR_MODEL`, `GRADER_MODEL`, `FAST_MODEL`, `EMBEDDING_MODEL` and
+`NEBIUS_BASE_URL` environment variables.
+
 Once your keys are in `.env`, verify everything end to end with a few cheap live
 calls before running a full job:
 

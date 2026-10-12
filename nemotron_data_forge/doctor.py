@@ -39,7 +39,11 @@ def check_environment(
 
     has_nebius = bool((config.NEBIUS_API_KEY or "").strip())
     checks.append(
-        Check("NEBIUS_API_KEY present", has_nebius, "" if has_nebius else "set NEBIUS_API_KEY in .env")
+        Check(
+            f"{config.LLM_KEY_ENV} present",
+            has_nebius,
+            "" if has_nebius else f"set {config.LLM_KEY_ENV} in .env",
+        )
     )
     if not has_nebius and client is None:
         return checks
@@ -50,9 +54,9 @@ def check_environment(
         try:
             client = TokenFactoryClient()
         except Exception as exc:  # noqa: BLE001 - report, do not crash
-            checks.append(Check("Token Factory client", False, str(exc)))
+            checks.append(Check("LLM client", False, str(exc)))
             return checks
-    checks.append(Check("Token Factory client", True, config.NEBIUS_BASE_URL))
+    checks.append(Check("LLM client", True, f"{config.LLM_PROVIDER_LABEL} - {config.NEBIUS_BASE_URL}"))
 
     # 1. Model catalogue and configured model IDs.
     try:

@@ -2,6 +2,7 @@
 
 import pytest
 
+from nemotron_data_forge import config
 from nemotron_data_forge import search as search_module
 from nemotron_data_forge.errors import ConfigError, SearchError
 
@@ -18,6 +19,7 @@ class _Resp:
 
 def test_missing_key_raises(monkeypatch):
     monkeypatch.delenv("TAVILY_API_KEY", raising=False)
+    monkeypatch.setattr(config, "TAVILY_API_KEY", "")
     with pytest.raises(ConfigError):
         search_module.tavily_search("tax", api_key="")
 

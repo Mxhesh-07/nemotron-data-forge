@@ -39,19 +39,68 @@ def _env_float(name: str, default: float) -> float:
         raise ConfigError(f"Environment variable {name}={raw!r} must be a number") from exc
 
 
-# --- Nebius Token Factory --------------------------------------------------
-NEBIUS_BASE_URL = _env("NEBIUS_BASE_URL", "https://api.tokenfactory.nebius.com/v1/")
-NEBIUS_API_KEY = _env("NEBIUS_API_KEY")
+# --- Provider --------------------------------------------------------------
+# "nebius" is the default and the runtime required for the hackathon
+# (Nebius Token Factory). "nvidia" points the same OpenAI-compatible client at
+# NVIDIA's free NIM trial endpoint, so the pipeline can be exercised card-free
+# during development. It is NOT a substitute for the Token Factory run in the
+# final submission.
+LLM_PROVIDER = _env("LLM_PROVIDER", "nebius").strip().lower()
+
+_PROVIDER_PRESETS: dict[str, dict[str, str]] = {
+    "nebius": {
+        "label": "Nebius Token Factory",
+        "base_url": "https://api.tokenfactory.nebius.com/v1/",
+        "key_env": "NEBIUS_API_KEY",
+        "key_url": "https://tokenfactory.nebius.com",
+        "generator": "nvidia/Nemotron-3-Super-120b-a12b",
+        "grader": "nvidia/Nemotron-3-Ultra-550b-a55b",
+        "fast": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+        "embedding": "Qwen/Qwen3-Embedding-8B",
+    },
+    "nvidia": {
+        "label": "NVIDIA NIM (development fallback)",
+        "base_url": "https://integrate.api.nvidia.com/v1/",
+        "key_env": "NVIDIA_API_KEY",
+        "key_url": "https://build.nvidia.com",
+        "generator": "nvidia/nemotron-3-super-120b-a12b",
+        "grader": "nvidia/nemotron-3-ultra-550b-a55b",
+        "fast": "nvidia/nemotron-3-nano-30b-a3b",
+        "embedding": "nvidia/llama-3.2-nv-embedqa-1b-v2",
+    },
+}
+
+
+def provider_settings(provider: str | None = None) -> dict[str, str]:
+    """Return the resolved settings preset for a provider name."""
+    name = (provider if provider is not None else LLM_PROVIDER).strip().lower()
+    if name not in _PROVIDER_PRESETS:
+        raise ConfigError(
+            f"Unknown LLM_PROVIDER {name!r}. Choose one of {sorted(_PROVIDER_PRESETS)}."
+        )
+    return dict(_PROVIDER_PRESETS[name])
+
+
+LLM_PROVIDER = _env("LLM_PROVIDER", "nebius").strip().lower()
+_PRESET = provider_settings(LLM_PROVIDER)
+LLM_KEY_ENV = _PRESET["key_env"]
+LLM_PROVIDER_LABEL = _PRESET["label"]
+
+# --- OpenAI-compatible endpoint (Nebius Token Factory by default) -----------
+NEBIUS_BASE_URL = _env("NEBIUS_BASE_URL", _PRESET["base_url"])
+# The provider-specific key wins; the other is accepted as a fallback so that
+# switching providers is a one-line change to LLM_PROVIDER.
+NEBIUS_API_KEY = _env(_PRESET["key_env"]) or _env("NEBIUS_API_KEY") or _env("NVIDIA_API_KEY")
 
 # --- Tavily ----------------------------------------------------------------
 TAVILY_API_KEY = _env("TAVILY_API_KEY")
 TAVILY_URL = _env("TAVILY_URL", "https://api.tavily.com/search")
 
 # --- Models ----------------------------------------------------------------
-GENERATOR_MODEL = _env("GENERATOR_MODEL", "nvidia/Nemotron-3-Super-120b-a12b")
-GRADER_MODEL = _env("GRADER_MODEL", "nvidia/Nemotron-3-Ultra-550b-a55b")
-FAST_MODEL = _env("FAST_MODEL", "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B")
-EMBEDDING_MODEL = _env("EMBEDDING_MODEL", "Qwen/Qwen3-Embedding-8B")
+GENERATOR_MODEL = _env("GENERATOR_MODEL", _PRESET["generator"])
+GRADER_MODEL = _env("GRADER_MODEL", _PRESET["grader"])
+FAST_MODEL = _env("FAST_MODEL", _PRESET["fast"])
+EMBEDDING_MODEL = _env("EMBEDDING_MODEL", _PRESET["embedding"])
 
 # --- Pipeline defaults -----------------------------------------------------
 DEFAULT_TOPIC = _env("DEFAULT_TOPIC", "Indian tax law for freelancers")
@@ -91,12 +140,13 @@ APP_NAME = "nemotron-data-forge"
 
 
 def require_nebius_key(api_key: str | None = None) -> str:
-    """Return a usable Nebius key or raise ConfigError."""
+    """Return a usable provider API key or raise ConfigError."""
     key = api_key or NEBIUS_API_KEY
     if not key or not key.strip():
         raise ConfigError(
-            "Missing NEBIUS_API_KEY. Get one at https://tokenfactory.nebius.com and set it "
-            "in your environment, a .env file, or the app sidebar."
+            f"Missing {LLM_KEY_ENV} (provider: {LLM_PROVIDER_LABEL}). Get one at "
+            f"{_PRESET['key_url']} and set it in your environment, a .env file, "
+            "or the app sidebar."
         )
     return key.strip()
 

@@ -80,3 +80,15 @@ def test_invalid_json_raises(monkeypatch):
     monkeypatch.setattr(search_module.requests, "post", lambda *a, **k: resp)
     with pytest.raises(SearchError):
         search_module.tavily_search("tax", api_key="key", sleep=lambda _s: None)
+
+
+def test_non_numeric_score_defaults_to_zero(monkeypatch):
+    payload = {
+        "results": [
+            {"title": "A", "url": "https://a.com", "content": "x", "score": "high"},
+            {"title": "B", "url": "https://b.com", "content": "y"},
+        ]
+    }
+    monkeypatch.setattr(search_module.requests, "post", lambda *a, **k: _Resp(200, payload))
+    sources = search_module.tavily_search("tax", api_key="key", sleep=lambda _s: None)
+    assert [s.score for s in sources] == [0.0, 0.0]

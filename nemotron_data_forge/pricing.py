@@ -11,7 +11,8 @@ MODEL_PRICES: dict[str, tuple[float, float]] = {
     "nvidia/Nemotron-3-Super-120b-a12b": (0.30, 0.90),
     "nvidia/Nemotron-3-Ultra-550b-a55b": (1.00, 3.00),
     "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B": (0.06, 0.24),
-    "nvidia/Nemotron-3_5-Lightning": (0.06, 0.24),
+    # NVIDIA NIM development-fallback fast model (same family as the Nano model).
+    "nvidia/nemotron-3.5-lightning-30b-a3b": (0.06, 0.24),
     "Qwen/Qwen3-Embedding-8B": (0.01, 0.00),
 }
 

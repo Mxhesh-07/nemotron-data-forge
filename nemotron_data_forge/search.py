@@ -91,12 +91,16 @@ def _parse_results(data: dict) -> list[Source]:
         url = (item.get("url") or "").strip()
         if not content or not url:
             continue
+        try:
+            score = float(item.get("score") or 0.0)
+        except (TypeError, ValueError):
+            score = 0.0
         sources.append(
             Source(
                 title=(item.get("title") or url).strip(),
                 url=url,
                 content=content,
-                score=float(item.get("score") or 0.0),
+                score=score,
             )
         )
     return sources

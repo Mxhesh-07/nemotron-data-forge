@@ -101,7 +101,12 @@ def _make_stdout_unicode_safe() -> None:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     _make_stdout_unicode_safe()
-    configure_logging("WARNING" if args.quiet else args.log_level)
+    # Keep `--check` output clean: the PASS/FAIL lines are printed directly, while
+    # this suppresses the underlying httpx INFO request logs.
+    if args.quiet or args.check:
+        configure_logging("WARNING")
+    else:
+        configure_logging(args.log_level)
 
     if args.check:
         from .doctor import check_environment

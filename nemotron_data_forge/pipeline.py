@@ -169,7 +169,7 @@ def run_pipeline(
         grade_groups.setdefault(example.source_url, []).append(example)
     grade_targets = [(url, group) for url, group in grade_groups.items() if group]
 
-    grade_meter = _Meter(progress, 65.0, 88.0)
+    grade_meter = _Meter(progress, 65.0, 84.0)
     grade_meter.set_total(len(grade_targets))
 
     def _grade(item) -> None:
@@ -203,7 +203,10 @@ def run_pipeline(
             errors.append("skipped rewrite-on-reject: budget cap reached")
         rewrite_rounds = 0
     if rewrite_rounds > 0:
-        rewrite_meter = _Meter(progress, 86.0, 90.0)
+        # One meter across all rounds so the progress fraction never goes
+        # backwards; the total grows as each round adds targets.
+        rewrite_meter = _Meter(progress, 84.0, 90.0)
+        rewrite_targets_seen = 0
         for round_index in range(rewrite_rounds):
             weak = [e for e in generated if e.verdict == "rejected" and e.scores]
             if not weak:
@@ -213,7 +216,8 @@ def run_pipeline(
             for example in weak:
                 groups.setdefault(example.source_url, []).append(example)
             targets = [(url, items) for url, items in groups.items() if url in by_url]
-            rewrite_meter.set_total(len(targets))
+            rewrite_targets_seen += len(targets)
+            rewrite_meter.set_total(rewrite_targets_seen)
 
             def _rewrite(item) -> list[Example]:
                 url, items = item

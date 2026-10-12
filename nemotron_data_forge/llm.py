@@ -24,7 +24,7 @@ from openai import (
 )
 
 from . import config
-from .errors import ConfigError, LLMError, LLMResponseError
+from .errors import LLMError, LLMResponseError
 from .logging_utils import get_logger
 from .usage import UsageTracker
 
@@ -106,10 +106,7 @@ class TokenFactoryClient:
         usage: UsageTracker | None = None,
         sleep=time.sleep,
     ) -> None:
-        try:
-            key = config.require_nebius_key(api_key)
-        except ConfigError:
-            raise
+        key = config.require_nebius_key(api_key)
         self.base_url = base_url or config.NEBIUS_BASE_URL
         self.max_retries = max(1, max_retries if max_retries is not None else config.MAX_RETRIES)
         self.timeout = timeout if timeout is not None else config.REQUEST_TIMEOUT
@@ -222,20 +219,23 @@ class TokenFactoryClient:
         """Chat completion that must return JSON.
 
         Tries JSON mode, then plain mode, and finally one repair turn before
-        giving up.
+        giving up. When ``required_key`` is set, the parsed value must be a JSON
+        object containing that key.
         """
+        def _validate(parsed):
+            if required_key and (not isinstance(parsed, dict) or required_key not in parsed):
+                raise LLMResponseError(f"expected a JSON object with key {required_key!r}")
+            return parsed
+
         content = self.chat(model, messages, temperature=temperature, max_tokens=max_tokens, json_mode=True)
         try:
-            parsed = extract_json(content)
-            if required_key and not isinstance(parsed, dict):
-                raise LLMResponseError(f"expected an object with key {required_key!r}")
-            return parsed
+            return _validate(extract_json(content))
         except LLMResponseError:
             logger.warning("Model %s returned non-JSON; retrying without json_mode", model)
 
         content = self.chat(model, messages, temperature=temperature, max_tokens=max_tokens, json_mode=False)
         try:
-            return extract_json(content)
+            return _validate(extract_json(content))
         except LLMResponseError:
             logger.warning("Repairing malformed JSON from %s", model)
 
@@ -247,7 +247,7 @@ class TokenFactoryClient:
             },
         ]
         repaired = self.chat(model, repair_messages, temperature=0.0, max_tokens=max_tokens, json_mode=False)
-        return extract_json(repaired)
+        return _validate(extract_json(repaired))
 
     def list_models(self) -> list[str]:
         """Return the model IDs the Token Factory account can access."""

@@ -52,3 +52,17 @@ def test_generation_failure_is_contained():
     client = FakeClient(fail_marker="Some real content")
     examples = generate_examples(client, _source(), topic="tax", count=2)
     assert examples == []
+
+
+def test_long_source_is_capped_to_max_source_chars(monkeypatch):
+    """Only MAX_SOURCE_CHARS // SOURCE_CHUNK_CHARS chunks may be sent."""
+    from nemotron_data_forge import config
+
+    monkeypatch.setattr(config, "MAX_SOURCE_CHARS", 3000)
+    monkeypatch.setattr(config, "SOURCE_CHUNK_CHARS", 1000)
+    content = ("x" * 999 + " ") * 10  # ten 1000-char chunks
+    client = FakeClient()
+    examples = generate_examples(client, _source(content), topic="tax", count=99)
+    assert len(client.calls) == 3  # 3000 // 1000
+    assert len(examples) > 0
+

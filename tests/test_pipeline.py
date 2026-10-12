@@ -98,3 +98,23 @@ def test_pipeline_reports_progress_to_100():
     )
     assert seen[0] <= 100 and seen[-1] == 100.0
     assert seen == sorted(seen)
+
+
+def test_pipeline_progress_is_monotonic_through_rewrite():
+    # First grade rejects, then the rewrite is graded high -> the rewrite phase runs.
+    seen = []
+    run_pipeline(
+        topic="tax",
+        examples_per_source=1,
+        max_sources=1,
+        keep_threshold=7.0,
+        client=FakeClient(scores_sequence=[4.0, 9.0]),
+        search_fn=fake_search(1),
+        use_embeddings=False,
+        max_concurrency=1,
+        max_rewrite_rounds=1,
+        on_progress=lambda pct, _msg: seen.append(pct),
+    )
+    assert seen == sorted(seen)
+    assert seen[-1] == 100.0
+

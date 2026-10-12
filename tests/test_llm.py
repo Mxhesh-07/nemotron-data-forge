@@ -230,3 +230,18 @@ def test_truncated_response_still_returns_content():
     client = TokenFactoryClient(api_key="test-key", max_retries=1, sleep=lambda _s: None)
     client._client = SimpleNamespace(chat=SimpleNamespace(completions=_Completions()))
     assert client.chat("m", [{"role": "user", "content": "hi"}]) == "partial"
+
+
+def test_chat_json_required_key_accepts_matching_object():
+    client, _ = _client_with(['{"examples": []}'])
+    parsed = client.chat_json(
+        "m", [{"role": "user", "content": "hi"}], required_key="examples"
+    )
+    assert parsed == {"examples": []}
+
+
+def test_chat_json_required_key_is_enforced_across_attempts():
+    client, completions = _client_with(['{"nope": 1}', '{"nope": 1}', '{"nope": 1}'])
+    with pytest.raises(LLMResponseError):
+        client.chat_json("m", [{"role": "user", "content": "hi"}], required_key="examples")
+    assert completions.calls == 3

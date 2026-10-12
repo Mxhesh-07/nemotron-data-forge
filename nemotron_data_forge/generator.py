@@ -165,7 +165,12 @@ def generate_examples(
         return []
 
     model = model or config.GENERATOR_MODEL
-    chunks = chunk_text(source.content, config.SOURCE_CHUNK_CHARS)[: config.MAX_SOURCE_CHARS] or [
+    # Cap how much of a long source is used to MAX_SOURCE_CHARS of text. This is a
+    # number of *chunks*, not a raw list slice by character count (a previous
+    # `[: config.MAX_SOURCE_CHARS]` capped the chunk list at ~20000 entries, i.e.
+    # did nothing).
+    max_chunks = max(1, config.MAX_SOURCE_CHARS // max(1, config.SOURCE_CHUNK_CHARS))
+    chunks = chunk_text(source.content, config.SOURCE_CHUNK_CHARS)[:max_chunks] or [
         source.content[: config.MAX_SOURCE_CHARS]
     ]
     per_chunk = max(1, -(-count // len(chunks)))  # ceil division

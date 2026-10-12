@@ -88,7 +88,6 @@ def provider_settings(provider: str | None = None) -> dict[str, str]:
     return dict(_PROVIDER_PRESETS[name])
 
 
-LLM_PROVIDER = _env("LLM_PROVIDER", "nebius").strip().lower()
 _PRESET = provider_settings(LLM_PROVIDER)
 LLM_KEY_ENV = _PRESET["key_env"]
 LLM_PROVIDER_LABEL = _PRESET["label"]

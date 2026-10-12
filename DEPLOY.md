@@ -52,7 +52,8 @@ cd hf-space
 cp -r ../nemotron-data-forge/nemotron_data_forge .
 cp ../nemotron-data-forge/app.py .
 cp ../nemotron-data-forge/requirements.txt .
-cp ../nemotron-data-forge/.streamlit/config.toml .   # if a .streamlit dir is needed
+mkdir -p .streamlit
+cp ../nemotron-data-forge/.streamlit/config.toml .streamlit/
 cp ../nemotron-data-forge/deploy/huggingface/README.md README.md
 
 # 3. Add the two secrets as Space secrets (Settings → Variables and secrets),
@@ -72,11 +73,14 @@ The Space template already contains the frontmatter (`sdk: streamlit`,
 docker build -t nemotron-data-forge .
 docker run --rm -p 8501:8501 \
   -e NEBIUS_API_KEY=... -e TAVILY_API_KEY=... -e DEFAULT_MAX_USD=1.0 \
-  nemotron-data-forge streamlit run app.py --server.address 0.0.0.0
+  --entrypoint streamlit \
+  nemotron-data-forge run app.py --server.address 0.0.0.0
 ```
 
-The default image entrypoint runs the headless CLI; pass the `streamlit` command
-above to serve the web UI instead.
+The image entrypoint runs the headless CLI, so `docker run ... <cli args>`
+builds a dataset. Use `--entrypoint streamlit` as shown to serve the web UI
+instead (appending `streamlit run ...` to the default entrypoint would forward
+those words to the CLI as arguments).
 
 ---
 

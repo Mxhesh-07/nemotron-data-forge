@@ -1,0 +1,234 @@
+# 🧪 Nemotron Data Forge
+
+**Type a topic → get a clean, graded, de-duplicated, fine-tuning-ready dataset.**
+
+Nemotron Data Forge is a self-running workflow that turns any topic into a
+high-quality instruction dataset for fine-tuning:
+
+```
+Topic → Tavily finds fresh sources → Nemotron 3 Super generates examples
+      → Nemotron 3 Ultra grades & filters them → semantic dedupe → JSONL + report
+```
+
+Built for the **Nebius × NVIDIA Global AI Hackathon — Best Apps & Agents track**,
+targeting the **Best Use of Tavily** bonus.
+
+---
+
+## Why it's more than a demo
+
+Most "generate a dataset" scripts dump raw model output into a file. This one
+treats dataset quality as the product:
+
+- **Graded, not guessed.** Every example is scored on *accuracy*, *helpfulness*
+  and *clarity* by a stronger model, then filtered by an average threshold plus
+  a per-axis floor.
+- **De-duplicated.** Near-duplicates are removed with embedding cosine
+  similarity (falls back to token-set Jaccard if embeddings are unavailable).
+- **Traceable.** Each example keeps its `source_url`, `source_title`, scores and
+  the model IDs used, so anything can be audited back to a real web source.
+- **Resilient.** Per-source and per-batch failures are captured and reported;
+  one bad source never kills a run. Transient API errors are retried with
+  exponential backoff and jitter.
+- **Observable.** Every run writes a manifest with per-model token usage, an
+  estimated USD cost, timings, and a list of any warnings.
+- **Tested.** 71 unit/integration tests run entirely offline against fakes, plus
+  a render test for the Streamlit UI and a CI workflow.
+
+---
+
+## How the required tools are used
+
+| Requirement | Where it is used | File |
+| --- | --- | --- |
+| **Runs on Nebius Token Factory** | All model calls use the OpenAI-compatible Token Factory API at `https://api.tokenfactory.nebius.com/v1/` | `nemotron_data_forge/llm.py` |
+| **NVIDIA Nemotron (generator)** | `nvidia/Nemotron-3-Super-120b-a12b` writes grounded instruction/response pairs | `nemotron_data_forge/generator.py` |
+| **NVIDIA Nemotron (grader)** | `nvidia/Nemotron-3-Ultra-550b-a55b` scores and filters each example | `nemotron_data_forge/grader.py` |
+| **Tavily (Best Use of Tavily bonus)** | Real runtime call to the Tavily Search API for fresh grounding sources | `nemotron_data_forge/search.py` |
+| **Nebius Serverless Jobs** (scale) | Run the same CLI as a background job to build large datasets | `scripts/serverless_job.py`, `Dockerfile` |
+
+> Why Nemotron 3 Super **and** Ultra? Super is fast and cheap for generation;
+> Ultra is reserved for the harder judging step. That split keeps the app
+> responsive and stretches credits — exactly what the track calls for.
+
+---
+
+## Quickstart
+
+```bash
+# 1. Install
+python -m venv .venv
+.venv\Scripts\activate         # Windows
+# source .venv/bin/activate    # macOS/Linux
+pip install -r requirements.txt
+
+# 2. Configure keys
+copy .env.example .env         # Windows  (cp on macOS/Linux)
+# then edit .env and set NEBIUS_API_KEY and TAVILY_API_KEY
+
+# 3. Run the demo UI
+streamlit run app.py
+```
+
+Open the app, type a topic (e.g. *"Indian tax law for freelancers"*), pick a
+format, and click **Generate dataset**. Download `dataset.jsonl`, the
+`quality-report.md`, and the run `manifest.json`.
+
+### API keys
+
+- **NEBIUS_API_KEY** — from <https://tokenfactory.nebius.com> (Get API key).
+- **TAVILY_API_KEY** — from <https://tavily.com>. The **Nebius Builder Program**
+  (<https://dev.nebius.com/builders>) includes $25 of Tavily credit.
+- No Tavily key yet? Tick **Demo mode** in the sidebar to use three bundled
+  sample sources and exercise the whole pipeline offline. The Tavily bonus
+  requires running in normal mode with a real key.
+
+---
+
+## Command line (headless / for Serverless Jobs)
+
+```bash
+# Entry point is installed as `dataforge`, or use `python -m nemotron_data_forge`.
+python -m nemotron_data_forge --topic "Indian tax law for freelancers" --format Q&A
+python -m nemotron_data_forge --topic "intro to vector databases" --demo
+python -m nemotron_data_forge --topic "..." --examples-per-source 4 --max-sources 6 --threshold 7.5
+python -m nemotron_data_forge --topic "..." --push-hf yourname/tax-freelancers-in   # optional HF push
+python -m nemotron_data_forge --topic "..." --manifest-json                         # machine-readable run manifest
+```
+
+Key flags:
+
+| Flag | Default | Meaning |
+| --- | --- | --- |
+| `--topic` | config default | Topic to build the dataset for |
+| `--format` | `Q&A` | `Q&A`, `Chat`, or `Reasoning` |
+| `--examples-per-source` | `3` | Examples requested per source |
+| `--max-sources` | `4` | Maximum Tavily results to use |
+| `--threshold` | `7.0` | Minimum average score to keep an example |
+| `--min-axis-score` | `5.0` | Minimum score on every axis |
+| `--concurrency` | `4` | Parallel model requests |
+| `--demo` | off | Use bundled sample sources (no Tavily) |
+| `--no-embeddings` | off | Disable semantic de-duplication |
+| `--out` | `outputs/` | Output directory |
+| `--push-hf` | off | Push the dataset to a Hugging Face dataset repo |
+| `--manifest-json` | off | Print the run manifest as JSON to stdout |
+
+Outputs land in `outputs/` as `dataset-<stamp>.jsonl`,
+`quality-report-<stamp>.md`, `manifest-<stamp>.json` and
+`dataset-card-<stamp>.md`.
+
+---
+
+## What you get
+
+- **`dataset.jsonl`** — instruction/response records ready for fine-tuning, each
+  with its `source_url`, scores and topic for traceability.
+  `samples/example-dataset.jsonl` shows the format.
+- **`quality-report.md`** — counts, average scores, per-model token usage,
+  sources, and kept vs rejected examples with the reason each was rejected.
+- **`manifest.json`** — machine-readable record of the run: config, models,
+  token usage, estimated cost, duration, sources and warnings.
+- **`dataset-card.md`** — a Hugging Face-ready dataset card (YAML front matter).
+
+---
+
+## Architecture
+
+```
+app.py  /  nemotron_data_forge/cli.py      UI + headless entrypoints
+        │
+        ▼
+nemotron_data_forge/pipeline.py            orchestration, concurrency, manifest
+  ├── search.py       Tavily search → Source objects (retries)
+  ├── generator.py    Nemotron 3 Super → Example objects (chunked, validated)
+  ├── grader.py       Nemotron 3 Ultra → scores + threshold filter (batched)
+  ├── dedupe.py       embedding-cosine or token-Jaccard de-duplication
+  ├── export.py       JSONL + Markdown report + manifest (+ optional HF push)
+  ├── llm.py          Token Factory client: retries, JSON repair, usage
+  ├── validation.py   length/emptiness checks and score clamping
+  ├── usage.py        thread-safe token/cost accounting
+  └── config.py       env-driven settings + validation
+```
+
+---
+
+## Production features
+
+| Concern | How it's handled |
+| --- | --- |
+| Transient API failures | Retries with exponential backoff + jitter on 429/5xx/timeouts (`llm.py`, `search.py`) |
+| Model returns bad JSON | JSON mode, graceful fallback, then a single repair turn; fenced/prose JSON is salvaged (`extract_json`) |
+| Long sources / long batches | Sources are chunked; grading is batched (`GRADE_BATCH_SIZE`) |
+| Rate limits & latency | Bounded concurrency with a thread pool (`--concurrency`) |
+| Hallucination | Grader scores *accuracy against the source*; low scores are dropped |
+| Bad output | Length/emptiness validation, score clamping, per-axis floor |
+| One source failing | Recorded per-source, run continues, surfaced in the manifest |
+| Cost visibility | Per-model token accounting + estimated USD cost from a pricing table |
+| Secrets | Keys come from env/`.env`, are never logged, and `.env` is git-ignored |
+
+---
+
+## Testing & CI
+
+```bash
+pip install -e ".[dev]"
+pytest          # 71 tests, fully offline (fakes mock the models and search)
+ruff check .    # lint
+```
+
+Tests cover JSON extraction and retry logic, generation and grading (including
+batching and score clamping), de-duplication, Tavily parsing/retries, the
+end-to-end pipeline, exports, the CLI, and the Streamlit app render.
+`.github/workflows/ci.yml` runs lint + tests on Python 3.10/3.11/3.12.
+
+---
+
+## Running at scale on Nebius Serverless Jobs
+
+A `Dockerfile` is included so the same pipeline can run as a background job
+(Serverless Jobs, Serverless Endpoints or DevPods all count as "runs on Nebius"):
+
+```bash
+docker build -t nemotron-data-forge .
+docker run --rm -e NEBIUS_API_KEY=... -e TAVILY_API_KEY=... \
+  -v "$PWD/outputs:/outputs" nemotron-data-forge \
+  --topic "Indian tax law for freelancers" --examples-per-source 5 --max-sources 8 --out /outputs
+```
+
+Point the job at `scripts/serverless_job.py` (the image's entrypoint) and pass
+the topic as an argument; keys are provided as environment variables. See
+<https://docs.nebius.com/serverless/quickstart/jobs>.
+
+---
+
+## Models
+
+| Role | Model ID | Input / Output (per 1M tokens) |
+| --- | --- | --- |
+| Generator | `nvidia/Nemotron-3-Super-120b-a12b` | $0.30 / $0.90 |
+| Grader | `nvidia/Nemotron-3-Ultra-550b-a55b` | $1.00 / $3.00 |
+| Fast (optional) | `nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B` | $0.06 / $0.24 |
+| Embeddings | `Qwen/Qwen3-Embedding-8B` | $0.01 |
+
+Model IDs are current as of Oct 2026 and can be overridden in `.env`.
+
+---
+
+## Configuration
+
+All settings are environment variables (see `.env.example`): model IDs and the
+base URL, pipeline defaults (topic, format, counts, thresholds), and limits
+(`MAX_CONCURRENCY`, `MAX_RETRIES`, `REQUEST_TIMEOUT`, `GRADE_BATCH_SIZE`,
+`SOURCE_CHUNK_CHARS`, `LOG_LEVEL`, `OUTPUT_DIR`).
+
+---
+
+## Roadmap
+
+- [ ] Rewrite step: re-generate examples the grader rejects (instead of dropping)
+- [ ] Before/after demo: fine-tune a small model on the dataset to prove quality
+- [ ] Stream progress from a Serverless Job back to the UI
+
+## License
+
+MIT — see [LICENSE](LICENSE).

@@ -26,3 +26,27 @@ def test_app_has_expected_controls():
     text_inputs = [i.label for i in at.text_input]
     assert "NEBIUS_API_KEY" in text_inputs
     assert "TAVILY_API_KEY" in text_inputs
+
+
+def test_app_generates_a_dataset_with_a_fake_client(monkeypatch):
+    """Click through the UI end to end, with the model client faked."""
+    from fakes import FakeClient
+
+    from nemotron_data_forge import pipeline as pipeline_module
+
+    monkeypatch.setattr(
+        pipeline_module, "TokenFactoryClient", lambda **kwargs: FakeClient(score=9.0)
+    )
+
+    at = AppTest.from_file(str(APP), default_timeout=180)
+    at.run()
+    next(i for i in at.text_input if i.label == "NEBIUS_API_KEY").set_value("test-key")
+    next(c for c in at.checkbox if c.label.startswith("Demo mode")).set_value(True)
+    at.button[0].click()
+    at.run()
+
+    assert not at.exception, [e.value for e in at.exception]
+    assert any("kept" in s.value for s in at.success)
+    metric_labels = [m.label for m in at.metric]
+    assert "Kept" in metric_labels
+    assert "Not kept" in metric_labels

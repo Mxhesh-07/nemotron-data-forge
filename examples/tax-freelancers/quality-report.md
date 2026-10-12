@@ -22,7 +22,7 @@
 | Avg accuracy (kept) | 9.78 |
 | Avg helpfulness (kept) | 8.89 |
 | Avg clarity (kept) | 8.89 |
-| Estimated cost (USD) | 0.0 |
+| Estimated cost (USD) | 0.006011 |
 | Total tokens | 6697 |
 | Duration (s) | 14.9 |
 

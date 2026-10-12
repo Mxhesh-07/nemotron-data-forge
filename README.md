@@ -32,7 +32,7 @@ treats dataset quality as the product:
   exponential backoff and jitter.
 - **Observable.** Every run writes a manifest with per-model token usage, an
   estimated USD cost, timings, and a list of any warnings.
-- **Tested.** 143 unit/integration tests run entirely offline against fakes, plus
+- **Tested.** 145 unit/integration tests run entirely offline against fakes, plus
   a render test for the Streamlit UI and a CI workflow.
 
 ---
@@ -241,7 +241,7 @@ uses the generated `outputs/dataset-*.jsonl`. Open
 
 ```bash
 pip install -e ".[dev]"
-pytest          # 143 tests, fully offline (fakes mock the models and search)
+pytest          # 145 tests, fully offline (fakes mock the models and search)
 ruff check .    # lint
 ```
 

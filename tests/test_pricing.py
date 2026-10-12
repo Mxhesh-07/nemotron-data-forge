@@ -15,8 +15,21 @@ def test_nebius_models_are_priced():
 
 
 def test_nvidia_nim_fallback_models_are_priced():
-    # The NIM fast model must be priced too, or budget accounting silently reads 0.
+    # Every model the NIM preset uses must be priced, or budget accounting
+    # silently reads 0 for the whole run.
+    assert estimate_cost("nvidia/nemotron-3-super-120b-a12b", 1000, 1000) > 0
+    assert estimate_cost("nvidia/nemotron-3-ultra-550b-a55b", 1000, 1000) > 0
     assert estimate_cost("nvidia/nemotron-3.5-lightning-30b-a3b", 1000, 1000) > 0
+    assert estimate_cost("nvidia/nemotron-3-embed-1b", 1000, 0) > 0
+
+
+def test_pricing_is_case_insensitive():
+    # Token Factory returns CamelCase ids, NIM lowercase ones; both must price.
+    assert has_price("nvidia/nemotron-3-super-120b-a12b") is True
+    assert has_price("NVIDIA/NEMOTRON-3-SUPER-120B-A12B") is True
+    assert estimate_cost("nvidia/nemotron-3-super-120b-a12b", 1000, 1000) == estimate_cost(
+        "nvidia/Nemotron-3-Super-120b-a12b", 1000, 1000
+    )
 
 
 def test_unknown_model_is_free_not_a_crash():

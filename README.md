@@ -32,7 +32,7 @@ treats dataset quality as the product:
   exponential backoff and jitter.
 - **Observable.** Every run writes a manifest with per-model token usage, an
   estimated USD cost, timings, and a list of any warnings.
-- **Tested.** 103 unit/integration tests run entirely offline against fakes, plus
+- **Tested.** 108 unit/integration tests run entirely offline against fakes, plus
   a render test for the Streamlit UI and a CI workflow.
 
 ---
@@ -108,6 +108,7 @@ Key flags:
 | `--min-axis-score` | `5.0` | Minimum score on every axis |
 | `--concurrency` | `4` | Parallel model requests |
 | `--rewrite-rounds` | `1` | Rewrite-on-reject rounds (0 disables) |
+| `--max-usd` | `0` | Soft spend cap in USD for the run (0 = unlimited) |
 | `--demo` | off | Use bundled sample sources (no Tavily) |
 | `--no-embeddings` | off | Disable semantic de-duplication |
 | `--out` | `outputs/` | Output directory |
@@ -166,6 +167,7 @@ nemotron_data_forge/pipeline.py            orchestration, concurrency, manifest
 | Bad output | Length/emptiness validation, score clamping, per-axis floor |
 | One source failing | Recorded per-source, run continues, surfaced in the manifest |
 | Cost visibility | Per-model token accounting + estimated USD cost from a pricing table |
+| Spend guardrail | Soft USD cap per run (`--max-usd`): stops new sources and skips optional phases once reached |
 | Secrets | Keys come from env/`.env`, are never logged, and `.env` is git-ignored |
 
 ---
@@ -198,7 +200,7 @@ uses the generated `outputs/dataset-*.jsonl`. Open
 
 ```bash
 pip install -e ".[dev]"
-pytest          # 103 tests, fully offline (fakes mock the models and search)
+pytest          # 108 tests, fully offline (fakes mock the models and search)
 ruff check .    # lint
 ```
 
@@ -245,7 +247,7 @@ Model IDs are current as of Oct 2026 and can be overridden in `.env`.
 All settings are environment variables (see `.env.example`): model IDs and the
 base URL, pipeline defaults (topic, format, counts, thresholds), and limits
 (`MAX_CONCURRENCY`, `MAX_RETRIES`, `REQUEST_TIMEOUT`, `GRADE_BATCH_SIZE`,
-`SOURCE_CHUNK_CHARS`, `LOG_LEVEL`, `OUTPUT_DIR`).
+`SOURCE_CHUNK_CHARS`, `LOG_LEVEL`, `OUTPUT_DIR`, `DEFAULT_MAX_USD`).
 
 ---
 

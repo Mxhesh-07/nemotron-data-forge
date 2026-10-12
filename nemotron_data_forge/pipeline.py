@@ -72,6 +72,7 @@ def run_pipeline(
     use_embeddings: bool = True,
     max_concurrency: int | None = None,
     max_rewrite_rounds: int | None = None,
+    max_usd: float | None = None,
     client: TokenFactoryClient | None = None,
     search_fn: Callable[..., list[Source]] | None = None,
     on_progress: ProgressFn | None = None,
@@ -87,6 +88,12 @@ def run_pipeline(
 
     if client is None:
         client = TokenFactoryClient(api_key=nebius_api_key)
+
+    budget = max(0.0, max_usd if max_usd is not None else config.DEFAULT_MAX_USD)
+    budget_hit = False
+
+    def _over_budget() -> bool:
+        return budget > 0 and client.usage.total_cost_usd() >= budget
 
     stats = PipelineStats(
         topic=topic,
@@ -111,7 +118,10 @@ def run_pipeline(
             sources = []
     stats.sources_used = len(sources)
     if not sources:
-        return _finalize([], [], stats, sources, [], errors, client, started, started_iso)
+        return _finalize(
+            [], [], stats, sources, [], errors, client, started, started_iso,
+            budget_usd=budget, budget_hit=budget_hit,
+        )
 
     outcomes: dict[str, SourceOutcome] = {
         s.url: SourceOutcome(url=s.url, title=s.title) for s in sources
@@ -140,6 +150,15 @@ def run_pipeline(
                 errors.append(f"generation failed for {source.url}: {exc}")
                 logger.error("Generation failed for %s: %s", source.url, exc)
             gen_meter.tick(f"Generated from {outcomes[source.url].title[:40]}...")
+            if not budget_hit and _over_budget():
+                budget_hit = True
+                errors.append(
+                    f"budget cap of ${budget:.4f} reached during generation; "
+                    "stopped generating new sources"
+                )
+                logger.warning("Budget cap reached; cancelling queued generation")
+                pool.shutdown(wait=False, cancel_futures=True)
+                break
 
     stats.generated = len(generated)
 
@@ -176,6 +195,13 @@ def run_pipeline(
     rewrite_rounds = max(
         0, max_rewrite_rounds if max_rewrite_rounds is not None else config.DEFAULT_REWRITE_ROUNDS
     )
+    # Budget gate: grading the already-generated (bounded) set still runs, but
+    # the optional enhancement phases are skipped once the cap is reached.
+    if budget_hit or _over_budget():
+        budget_hit = True
+        if rewrite_rounds > 0:
+            errors.append("skipped rewrite-on-reject: budget cap reached")
+        rewrite_rounds = 0
     if rewrite_rounds > 0:
         rewrite_meter = _Meter(progress, 86.0, 90.0)
         for round_index in range(rewrite_rounds):
@@ -238,13 +264,18 @@ def run_pipeline(
             )
 
     stats.graded = sum(1 for e in generated if e.scores)
+    budget_hit = budget_hit or _over_budget()
 
     # --- 4. Dedupe ---------------------------------------------------------
     progress(90.0, "Removing near-duplicate examples...")
     candidates = [e for e in generated if e.verdict == "kept"]
     embeddings = None
     if use_embeddings and candidates:
-        embeddings = client.embed([f"{e.instruction}\n{e.response}" for e in candidates])
+        if budget_hit or _over_budget():
+            budget_hit = True
+            errors.append("skipped semantic de-duplication (embeddings): budget cap reached")
+        else:
+            embeddings = client.embed([f"{e.instruction}\n{e.response}" for e in candidates])
     kept = dedupe(candidates, threshold=config.DEFAULT_DEDUPE_THRESHOLD, embeddings=embeddings)
     stats.duplicates_removed = len(candidates) - len(kept)
 
@@ -283,8 +314,11 @@ def run_pipeline(
             "use_embeddings": use_embeddings,
             "max_concurrency": worker,
             "max_rewrite_rounds": rewrite_rounds,
+            "max_usd": budget,
             "sample_sources": use_sample_sources,
         },
+        budget_usd=budget,
+        budget_hit=budget_hit,
     )
 
 
@@ -299,6 +333,8 @@ def _finalize(
     started: float,
     started_iso: str,
     run_config: dict | None = None,
+    budget_usd: float = 0.0,
+    budget_hit: bool = False,
 ) -> PipelineResult:
     finished = time.time()
     manifest = RunManifest(
@@ -310,6 +346,8 @@ def _finalize(
         usage=client.usage.as_dict(),
         estimated_cost_usd=client.usage.total_cost_usd(),
         total_tokens=client.usage.total_tokens(),
+        budget_usd=budget_usd,
+        budget_hit=budget_hit,
         sources=[s.to_dict() for s in sources],
         errors=errors,
     )

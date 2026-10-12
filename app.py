@@ -63,6 +63,14 @@ with st.sidebar:
         help="Regenerate examples the grader rejects, using its reason as guidance. 0 disables.",
     )
     use_embeddings = st.checkbox("Semantic de-duplication (embeddings)", value=True)
+    max_usd = st.number_input(
+        "Soft spend cap (USD, 0 = none)",
+        min_value=0.0,
+        value=float(config.DEFAULT_MAX_USD),
+        step=0.01,
+        format="%.4f",
+        help="Once estimated spend reaches this, new sources stop and optional phases are skipped.",
+    )
 
     st.divider()
     with st.expander("Models used"):
@@ -108,6 +116,7 @@ if run:
             use_embeddings=use_embeddings,
             max_concurrency=concurrency,
             max_rewrite_rounds=rewrite_rounds,
+            max_usd=max_usd,
             on_progress=on_progress,
         )
         st.session_state["result"] = result
@@ -134,11 +143,16 @@ if result is not None:
     c4.metric("Recovered by rewrite", stats.recovered)
     c5.metric("Est. cost (USD)", f"${manifest.estimated_cost_usd:.4f}")
 
+    if manifest.budget_hit:
+        st.warning(
+            f"Budget cap of ${manifest.budget_usd:.4f} reached — generation of new sources "
+            "and optional phases (rewrite, embeddings) were skipped."
+        )
+
     if manifest.errors:
         with st.expander(f"⚠️ {len(manifest.errors)} warning(s) during the run"):
             for err in manifest.errors:
                 st.write(f"- {err}")
-
     tab_kept, tab_rejected, tab_sources, tab_manifest = st.tabs(
         ["✅ Kept", "❌ Rejected", "🔗 Sources", "📋 Run manifest"]
     )

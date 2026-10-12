@@ -50,6 +50,12 @@ def build_parser() -> argparse.ArgumentParser:
         default=config.DEFAULT_REWRITE_ROUNDS,
         help="Rewrite-on-reject rounds: regenerate examples the grader rejected (0 disables).",
     )
+    parser.add_argument(
+        "--max-usd",
+        type=float,
+        default=config.DEFAULT_MAX_USD,
+        help="Soft spend cap in USD for the run (0 = unlimited).",
+    )
     parser.add_argument("--demo", action="store_true", help="Use bundled sample sources (no Tavily).")
     parser.add_argument(
         "--no-embeddings", action="store_true", help="Disable semantic de-duplication."
@@ -74,6 +80,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.rewrite_rounds < 0:
         logger.error("--rewrite-rounds must be >= 0")
         return 2
+    if args.max_usd < 0:
+        logger.error("--max-usd must be >= 0")
+        return 2
 
     out_dir = Path(args.out) if args.out else config.OUTPUT_DIR
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -95,6 +104,7 @@ def main(argv: list[str] | None = None) -> int:
             use_embeddings=not args.no_embeddings,
             max_concurrency=args.concurrency,
             max_rewrite_rounds=args.rewrite_rounds,
+            max_usd=args.max_usd,
             on_progress=progress,
         )
     except ConfigError as exc:

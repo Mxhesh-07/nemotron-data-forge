@@ -62,6 +62,8 @@ DEFAULT_KEEP_THRESHOLD = _env_float("DEFAULT_KEEP_THRESHOLD", 7.0)
 DEFAULT_MIN_AXIS_SCORE = _env_float("DEFAULT_MIN_AXIS_SCORE", 5.0)
 DEFAULT_DEDUPE_THRESHOLD = _env_float("DEFAULT_DEDUPE_THRESHOLD", 0.82)
 DEFAULT_REWRITE_ROUNDS = _env_int("DEFAULT_REWRITE_ROUNDS", 1)
+# Soft spend cap in USD for a single run. 0 means unlimited.
+DEFAULT_MAX_USD = _env_float("DEFAULT_MAX_USD", 0.0)
 
 # --- Limits ----------------------------------------------------------------
 REQUEST_TIMEOUT = _env_float("REQUEST_TIMEOUT", 120.0)

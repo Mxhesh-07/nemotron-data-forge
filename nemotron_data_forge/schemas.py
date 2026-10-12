@@ -81,6 +81,8 @@ class RunManifest:
     usage: dict[str, Any] = field(default_factory=dict)
     estimated_cost_usd: float = 0.0
     total_tokens: int = 0
+    budget_usd: float = 0.0
+    budget_hit: bool = False
     sources: list[dict[str, Any]] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
 

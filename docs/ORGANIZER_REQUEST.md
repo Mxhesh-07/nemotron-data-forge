@@ -13,6 +13,21 @@ guidance.
 2. **Devpost** — message the hackathon organizers / post in the discussion forum.
 3. **Email** — the hackathon contact address if one is listed.
 
+## Version 0 — Discord, send this first (shortest)
+
+> Hi Nebius + hackathon organizers 👋
+>
+> Quick ask: is there a **participant promo / sponsored Token Factory API key** for
+> the Nebius × NVIDIA hackathon? I'm a solo participant building on **Tavily +
+> Nemotron on Token Factory**, but Token Factory signup needs a billing account
+> with a **bank card** I don't have — the $1 trial and the Builder credit still
+> require a card.
+>
+> If a card-free key exists, I can run immediately. If not, is **NVIDIA NIM**
+> acceptable as a documented fallback? Thanks!
+>
+> Repo: https://github.com/Mxhesh-07/nemotron-data-forge
+
 ## Version A — Discord (short)
 
 > Hi Nebius team / hackathon organizers 👋

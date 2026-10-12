@@ -185,7 +185,9 @@ def generate_examples(
             },
         ]
         try:
-            data = client.chat_json(model, messages, temperature=temperature, max_tokens=2048)
+            data = client.chat_json(
+                model, messages, temperature=temperature, max_tokens=config.MAX_OUTPUT_TOKENS
+            )
         except Exception as exc:  # noqa: BLE001 - one chunk failing should not kill the source
             logger.warning("Generation failed for %s: %s", source.url, exc)
             continue
@@ -223,7 +225,9 @@ def rewrite_examples(
         },
     ]
     try:
-        data = client.chat_json(model, messages, temperature=temperature, max_tokens=2048)
+        data = client.chat_json(
+            model, messages, temperature=temperature, max_tokens=config.MAX_OUTPUT_TOKENS
+        )
     except Exception as exc:  # noqa: BLE001 - a failed repair pass is not fatal
         logger.warning("Rewrite failed for %s: %s", source.url, exc)
         return []

@@ -182,17 +182,34 @@ class TokenFactoryClient:
             try:
                 return self._client.chat.completions.create(**kwargs)
             except BadRequestError:
-                # Some models/endpoints reject response_format; retry without it.
-                if json_mode:
-                    logger.warning("json_mode rejected by %s; retrying without it", model)
-                    kwargs.pop("response_format", None)
-                    return self._client.chat.completions.create(**kwargs)
-                raise
+                # Endpoints differ in what they accept: some reject
+                # response_format, others reject the chat_template_kwargs
+                # extension. Drop the optional parameters and retry once.
+                dropped = [key for key in ("response_format", "extra_body") if key in kwargs]
+                if not dropped:
+                    raise
+                for key in dropped:
+                    kwargs.pop(key, None)
+                logger.warning(
+                    "Extended options %s rejected by %s; retrying with base parameters",
+                    dropped,
+                    model,
+                )
+                return self._client.chat.completions.create(**kwargs)
 
         response = self._run_with_retries(call, f"chat({model})")
         self._record_usage(response)
-        content = response.choices[0].message.content if response.choices else None
-        return content or ""
+        if not response.choices:
+            return ""
+        choice = response.choices[0]
+        if getattr(choice, "finish_reason", None) == "length":
+            logger.warning(
+                "Response from %s was truncated at max_tokens=%s; raise MAX_OUTPUT_TOKENS "
+                "or disable reasoning if JSON keeps getting cut off",
+                model,
+                max_tokens,
+            )
+        return choice.message.content or ""
 
     def chat_json(
         self,

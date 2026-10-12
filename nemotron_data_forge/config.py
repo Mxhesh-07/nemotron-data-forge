@@ -133,6 +133,9 @@ RETRY_BACKOFF_BASE = _env_float("RETRY_BACKOFF_BASE", 1.6)
 RETRY_BACKOFF_CAP = _env_float("RETRY_BACKOFF_CAP", 20.0)
 MAX_CONCURRENCY = _env_int("MAX_CONCURRENCY", 4)
 GRADE_BATCH_SIZE = _env_int("GRADE_BATCH_SIZE", 8)
+# Max completion tokens for generation/grading. Reasoning-capable models count
+# their thinking tokens toward this budget, so leave headroom.
+MAX_OUTPUT_TOKENS = _env_int("MAX_OUTPUT_TOKENS", 4096)
 
 MAX_SOURCE_CHARS = _env_int("MAX_SOURCE_CHARS", 6000)
 SOURCE_CHUNK_CHARS = _env_int("SOURCE_CHUNK_CHARS", 3000)

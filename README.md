@@ -296,7 +296,8 @@ Model IDs are current as of Oct 2026 and can be overridden in `.env`.
 All settings are environment variables (see `.env.example`): model IDs and the
 base URL, pipeline defaults (topic, format, counts, thresholds), and limits
 (`MAX_CONCURRENCY`, `MAX_RETRIES`, `REQUEST_TIMEOUT`, `GRADE_BATCH_SIZE`,
-`SOURCE_CHUNK_CHARS`, `LOG_LEVEL`, `OUTPUT_DIR`, `DEFAULT_MAX_USD`).
+`MAX_OUTPUT_TOKENS`, `LLM_PROVIDER`, `LLM_DISABLE_THINKING`, `SOURCE_CHUNK_CHARS`,
+`LOG_LEVEL`, `OUTPUT_DIR`, `DEFAULT_MAX_USD`).
 
 ---
 

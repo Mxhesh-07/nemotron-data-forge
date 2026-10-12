@@ -172,3 +172,40 @@ def test_thinking_disabled_passes_chat_template_kwargs(monkeypatch):
     client._client = SimpleNamespace(chat=SimpleNamespace(completions=_Completions()))
     client.chat("m", [{"role": "user", "content": "hi"}])
     assert captured["extra_body"] == {"chat_template_kwargs": {"enable_thinking": False}}
+
+
+def test_json_mode_rejected_retries_without_response_format():
+    client, completions = _client_with(
+        [openai.BadRequestError("bad", response=_response(400), body=None), '{"ok": 1}']
+    )
+    assert client.chat("m", [{"role": "user", "content": "hi"}], json_mode=True) == '{"ok": 1}'
+    assert completions.calls == 2
+
+
+def test_extra_body_rejected_retries_without_it(monkeypatch):
+    from nemotron_data_forge import config
+
+    monkeypatch.setattr(config, "LLM_DISABLE_THINKING", True)
+    client, completions = _client_with(
+        [openai.BadRequestError("bad", response=_response(400), body=None), "hi"]
+    )
+    assert client.chat("m", [{"role": "user", "content": "hi"}]) == "hi"
+    assert completions.calls == 2
+
+
+def test_truncated_response_still_returns_content():
+    class _Completions:
+        def create(self, **kwargs):
+            return SimpleNamespace(
+                model="m",
+                usage=SimpleNamespace(prompt_tokens=1, completion_tokens=1),
+                choices=[
+                    SimpleNamespace(
+                        finish_reason="length", message=SimpleNamespace(content="partial")
+                    )
+                ],
+            )
+
+    client = TokenFactoryClient(api_key="test-key", max_retries=1, sleep=lambda _s: None)
+    client._client = SimpleNamespace(chat=SimpleNamespace(completions=_Completions()))
+    assert client.chat("m", [{"role": "user", "content": "hi"}]) == "partial"

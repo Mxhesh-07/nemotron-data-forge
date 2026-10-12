@@ -15,6 +15,7 @@ os.environ["LLM_PROVIDER"] = "nebius"
 os.environ["NEBIUS_API_KEY"] = ""
 os.environ["NVIDIA_API_KEY"] = ""
 os.environ["TAVILY_API_KEY"] = ""
+os.environ["LLM_DISABLE_THINKING"] = "0"
 
 ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:

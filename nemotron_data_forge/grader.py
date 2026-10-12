@@ -67,7 +67,9 @@ def grade_examples(
         ]
         rows: list[dict] = []
         try:
-            data = client.chat_json(model, messages, temperature=temperature, max_tokens=2048)
+            data = client.chat_json(
+                model, messages, temperature=temperature, max_tokens=config.MAX_OUTPUT_TOKENS
+            )
             if isinstance(data, dict):
                 rows = data.get("scores", []) or []
             elif isinstance(data, list):

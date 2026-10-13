@@ -95,13 +95,13 @@ full test suite on every push, plus a hosted demo for judges.
 - Bold the on-screen metric numbers (Kept / Rejected / Duplicates / cost).
 - Caption key model IDs once: `NVIDIA-Nemotron-3-Super-120b-a12b`,
   `NVIDIA-Nemotron-3-Ultra-550b-a55b`.
-- Blur/omit any API key field contents. Never show the AIza / nvapi / tvly strings.
+- Blur/omit any API key field contents. Never show the AIza / nvapi / sk-or / tvly strings.
 - Keep it under 3:00 — if long, shorten shot 2 and read the voiceover faster.
 
 ## Fallback if the Nebius key is still pending on recording day
 
-Do **not** film the NVIDIA NIM fallback as the submission demo — the rules
-require the Token Factory run. Instead:
+Do **not** film the NVIDIA NIM or OpenRouter dev fallback as the submission demo
+— the rules require the Token Factory run. Instead:
 
 1. Post the organizer request (`docs/ORGANIZER_REQUEST.md`) immediately.
 2. Film shots 1, 2, 9, 10 and 11 (they don't need a live run).

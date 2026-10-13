@@ -1,4 +1,4 @@
-"""Tests for the OpenAI-compatible provider switch (Nebius default, NVIDIA dev fallback)."""
+"""Tests for the OpenAI-compatible provider switch (Nebius default, NVIDIA/OpenRouter dev fallbacks)."""
 
 import pytest
 
@@ -20,6 +20,14 @@ def test_nvidia_preset_points_at_nim():
     assert preset["base_url"] == "https://integrate.api.nvidia.com/v1/"
     assert preset["key_env"] == "NVIDIA_API_KEY"
     assert preset["generator"].startswith("nvidia/nemotron-3-")
+
+
+def test_openrouter_preset_points_at_openrouter():
+    preset = provider_settings("openrouter")
+    assert preset["base_url"] == "https://openrouter.ai/api/v1/"
+    assert preset["key_env"] == "OPENROUTER_API_KEY"
+    assert preset["generator"].startswith("nvidia/nemotron-3-")
+    assert preset["embedding"] == "nvidia/nemotron-3-embed-1b"
 
 
 def test_unknown_provider_raises():

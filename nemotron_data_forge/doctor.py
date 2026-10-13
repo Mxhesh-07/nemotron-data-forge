@@ -37,15 +37,15 @@ def check_environment(
     """
     checks: list[Check] = []
 
-    has_nebius = bool((config.NEBIUS_API_KEY or "").strip())
+    has_key = bool((config.NEBIUS_API_KEY or "").strip())
     checks.append(
         Check(
             f"{config.LLM_KEY_ENV} present",
-            has_nebius,
-            "" if has_nebius else f"set {config.LLM_KEY_ENV} in .env",
+            has_key,
+            "" if has_key else f"set {config.LLM_KEY_ENV} in .env",
         )
     )
-    if not has_nebius and client is None:
+    if not has_key and client is None:
         return checks
 
     if client is None:

@@ -32,7 +32,7 @@ treats dataset quality as the product:
   exponential backoff and jitter.
 - **Observable.** Every run writes a manifest with per-model token usage, an
   estimated USD cost, timings, and a list of any warnings.
-- **Tested.** 145 unit/integration tests run entirely offline against fakes, plus
+- **Tested.** 148 unit/integration tests run entirely offline against fakes, plus
   a render test for the Streamlit UI and a CI workflow.
 
 ---
@@ -80,24 +80,37 @@ format, and click **Generate dataset**. Download `dataset.jsonl`, the
 - **TAVILY_API_KEY** — from <https://tavily.com>. The **Nebius Builder Program**
   (<https://dev.nebius.com/builders>) includes $25 of Tavily credit.
 - No Tavily key yet? Tick **Demo mode** in the sidebar or pass `--demo` to use
-  three bundled sample sources instead of live search — you still need a Nebius
-  key for generation and grading. The Tavily bonus requires running in normal
-  mode with a real key.
+  three bundled sample sources instead of live search — you still need a provider
+  key (Nebius / NVIDIA / OpenRouter) for generation and grading. The Tavily bonus
+  requires running in normal mode with a real key.
 
-#### Development fallback provider (not for submission)
+#### Development fallback providers (not for submission)
 
 Nebius Token Factory requires a bank card to finish onboarding, which can block
-development. For local testing only, set `LLM_PROVIDER=nvidia` to point the same
-OpenAI-compatible client at NVIDIA's free NIM trial endpoint
-(<https://build.nvidia.com>, key `NVIDIA_API_KEY`, no card required). The app
-then runs the real Nemotron 3 models end to end:
+development. For local testing only you can point the same OpenAI-compatible
+client at one of two card-free endpoints:
+
+**Option A — NVIDIA NIM** (<https://build.nvidia.com>, key `NVIDIA_API_KEY`, no
+card) uses the exact same Nemotron 3 model IDs as the submission, so tests
+exercise the real thing:
 
 ```dotenv
 LLM_PROVIDER=nvidia
 NVIDIA_API_KEY=nvapi-...
 ```
 
-This is a **development convenience only** — the hackathon submission must run
+**Option B — OpenRouter** (<https://openrouter.ai>, key `OPENROUTER_API_KEY`, no
+card) serves Nemotron 3 over an OpenAI-compatible API. Append `:free` to a model
+ID (e.g. `nvidia/nemotron-3-super-120b-a12b:free`) for the zero-price route —
+those routes log prompts and have no SLA, so prefer them only for throwaway dev
+runs.
+
+```dotenv
+LLM_PROVIDER=openrouter
+OPENROUTER_API_KEY=sk-or-v1-...
+```
+
+Both are **development conveniences only** — the hackathon submission must run
 on Nebius Token Factory, so the recorded demo and the graded run use the default
 `LLM_PROVIDER=nebius`. Switching providers is a one-line change; model IDs and
 the base URL are configurable per provider via `config.py` presets and the
@@ -241,7 +254,7 @@ uses the generated `outputs/dataset-*.jsonl`. Open
 
 ```bash
 pip install -e ".[dev]"
-pytest          # 145 tests, fully offline (fakes mock the models and search)
+pytest          # 148 tests, fully offline (fakes mock the models and search)
 ruff check .    # lint
 ```
 

@@ -23,6 +23,14 @@ def test_nvidia_nim_fallback_models_are_priced():
     assert estimate_cost("nvidia/nemotron-3-embed-1b", 1000, 0) > 0
 
 
+def test_openrouter_fallback_models_reuse_price_table():
+    # The OpenRouter preset uses the same Nemotron ids as NIM, so cost accounting
+    # must resolve them (case-insensitively) instead of silently reading $0.
+    assert estimate_cost("nvidia/nemotron-3-super-120b-a12b", 1000, 1000) > 0
+    assert estimate_cost("nvidia/nemotron-3-ultra-550b-a55b", 1000, 1000) > 0
+    assert estimate_cost("nvidia/nemotron-3-embed-1b", 1000, 0) > 0
+
+
 def test_pricing_is_case_insensitive():
     # Token Factory returns CamelCase ids, NIM lowercase ones; both must price.
     assert has_price("nvidia/nemotron-3-super-120b-a12b") is True

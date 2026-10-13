@@ -19,6 +19,15 @@ def test_missing_nebius_key_stops_early(monkeypatch):
     assert "NEBIUS_API_KEY" in checks[0].name
 
 
+def test_openrouter_key_present_passes(monkeypatch):
+    monkeypatch.setattr(config, "LLM_PROVIDER", "openrouter")
+    monkeypatch.setattr(config, "LLM_KEY_ENV", "OPENROUTER_API_KEY")
+    monkeypatch.setattr(config, "NEBIUS_API_KEY", "x")
+    checks = check_environment(client=FakeClient(), run_search=False, require_tavily=False)
+    assert checks[0].name == "OPENROUTER_API_KEY present"
+    assert checks[0].ok is True
+
+
 def test_all_checks_pass_with_fakes(monkeypatch):
     monkeypatch.setattr(config, "NEBIUS_API_KEY", "x")
     monkeypatch.setattr(config, "TAVILY_API_KEY", "y")

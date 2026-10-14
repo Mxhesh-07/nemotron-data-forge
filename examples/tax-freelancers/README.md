@@ -8,7 +8,7 @@ source that Tavily retrieved.
 
 | File | What it is |
 | --- | --- |
-| `dataset.jsonl` | 8 training rows (Alpaca layout, `instruction`/`input`/`output`) |
+| `dataset.jsonl` | 11 training rows (Alpaca layout, `instruction`/`input`/`output`) |
 | `val.jsonl` | 1 held-out validation row (10% split) |
 | `quality-report.md` | Grader scores, kept/rejected examples, token usage, source list |
 | `manifest.json` | Full run manifest: config, models, usage, cost, sources, errors |
@@ -25,11 +25,11 @@ source that Tavily retrieved.
 | Grader | `nvidia/nemotron-3-ultra-550b-a55b` |
 | Embeddings | `nvidia/nemotron-3-embed-1b` |
 | Sources | 4, retrieved live by Tavily |
-| Generated / graded / kept | 12 / 12 / 9 |
-| Duplicates removed | 3 |
-| Avg accuracy / helpfulness / clarity | 9.78 / 8.89 / 8.89 |
-| Total tokens | 6,697 |
-| Duration | 14.9 s |
+| Generated / graded / kept | 12 / 12 / 12 |
+| Duplicates removed | 0 |
+| Avg accuracy / helpfulness / clarity | 10.0 / 9.0 / 9.0 |
+| Total tokens | 6,488 |
+| Duration | 14.5 s |
 
 ### A note on the provider
 

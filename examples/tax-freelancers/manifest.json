@@ -1,9 +1,9 @@
 {
   "app": "nemotron-data-forge",
   "version": "0.1.0",
-  "started_at": "2026-10-12T23:14:34",
-  "finished_at": "2026-10-12T23:14:49",
-  "duration_seconds": 14.9,
+  "started_at": "2026-10-13T00:25:12",
+  "finished_at": "2026-10-13T00:25:27",
+  "duration_seconds": 14.5,
   "config": {
     "examples_per_source": 3,
     "max_sources": 4,
@@ -17,31 +17,31 @@
     "sample_sources": false,
     "export_format": "alpaca",
     "val_ratio": 0.1,
-    "train_examples": 8,
+    "train_examples": 11,
     "val_examples": 1
   },
   "usage": {
     "nvidia/nemotron-3-super-120b-a12b": {
       "calls": 4,
-      "prompt_tokens": 1969,
-      "completion_tokens": 787,
-      "total_tokens": 2756
+      "prompt_tokens": 1880,
+      "completion_tokens": 806,
+      "total_tokens": 2686
     },
     "nvidia/nemotron-3-ultra-550b-a55b": {
       "calls": 4,
-      "prompt_tokens": 2594,
-      "completion_tokens": 704,
-      "total_tokens": 3298
+      "prompt_tokens": 2533,
+      "completion_tokens": 607,
+      "total_tokens": 3140
     },
     "nvidia/nemotron-3-embed-1b": {
       "calls": 1,
-      "prompt_tokens": 643,
+      "prompt_tokens": 662,
       "completion_tokens": 0,
-      "total_tokens": 643
+      "total_tokens": 662
     }
   },
-  "estimated_cost_usd": 0.006011,
-  "total_tokens": 6697,
+  "estimated_cost_usd": 0.00565,
+  "total_tokens": 6488,
   "budget_usd": 0.0,
   "budget_hit": false,
   "sources": [
@@ -52,22 +52,22 @@
       "score": 0.8914433
     },
     {
+      "title": "Freelancer Income Tax in India 2026: Rules, Rates & Filing",
+      "url": "https://www.wisemonk.io/blogs/freelancer-income-tax-in-india",
+      "content": "## How freelance income is taxed in India\n\nYour freelance earnings are taxed under the Income Tax Act, 1961. The law puts this income under the head Profits and Gains of Business or Profession. It is not treated as salary.\n\nThat difference matters. No employer deducts your tax at source and files for you. You are responsible for working out what you owe and paying it yourself. [...] Freelance income is taxed as business or professional income under the Income Tax Act, 1961. You pick either the new tax regime or the old one.\n Under the new regime for financial year (FY) 2025-26, also called assessment year (AY) 2026-27, income up to Rs 12 lakh is effectively tax-free because of the Section 87A rebate.",
+      "score": 0.8409005
+    },
+    {
       "title": "Freelance and taxes: India | Mellow",
       "url": "https://help.mellow.io/en/articles/9134949-freelance-and-taxes-india",
       "content": "1. Section 44AD sets out a PTS for small businesses with an annual income of INR 20 million or below. Under that arrangement, the tax amounts to 8% of annual turnover (6% if all transactions were made digitally). [...] Mellow\n\n# Freelance and taxes: India\n\nGeneral info about the country's taxation and tax reporting\n\nTable of contents\n\nBecause freelancers are not our employees and we don't pay taxes on payouts, they must declare any income received through Mellow by themselves.\n\nTo carry on tax accounting in India for your Mellow income, you need to:\n\n Be a tax resident\n Register at the tax office\n Determine the applicable tax obligations\n\n# Tax residence [...] 2. Section 44ADA regulates PTS for professional income (not applicable to income from entrepreneurial activity) not exceeding INR 5 million per year. It allows the taxpayer to pay tax on 50% of the actual income (the state will deem the other 50% expenses) using a standard progressive rate.\n3. Section 44AE is on PTS for goods carriage entities operating no more than 10 vehicles. It provides for a monthly tax of INR 7,500 per vehicle.",
       "score": 0.80735475
     },
     {
-      "title": "Freelancer Income Tax in India: A Practical Guide",
-      "url": "https://www.xflowpay.com/blog/freelancer-income-tax-india",
-      "content": "## Do foreign clients deduct TDS on payments to Indian freelancers?\n\nNo. Only Indian payers who are liable to deduct do so. When an Indian company pays a freelancer for professional services, it typically deducts 10% TDS under Section 194J (20% if you have not given a PAN). You claim that credit when filing. [...] Under the new tax regime for FY2025-26, the basic exemption limit is ₹4 lakh, and the Section 87A rebate lifts the effective zero-tax ceiling to ₹12 lakh of taxable income for resident individuals.\n\nSo a freelancer whose taxable profit stays at or below ₹12 lakh can end up with no income tax under the new regime, subject to meeting the conditions. Above that, slab rates apply on the full taxable income. [...] ## Simple enough for freelancers. Powerful enough for enterprises.\n\n## Frequently asked questions\n\nYes. Freelance earnings are taxable as business income (PGBP) once total income crosses the basic exemption limit. You file a return and, if liability exceeds ₹10,000, pay advance tax during the year.\n\nUnder the FY2025-26 new regime, taxable income up to ₹12 lakh can attract nil tax after the Section 87A rebate. This is income after expenses or the 44ADA presumption, not gross receipts.",
-      "score": 0.7992077
-    },
-    {
-      "title": "How Gig Workers & Freelancers Are Taxed in India ?",
-      "url": "https://www.kotaklife.com/insurance-guide/savingstax/tax-obligations-for-freelancers-and-gig-economy-professionals",
-      "content": "Every Indian earning more than ₹3,00,000 is liable to pay income tax annually. This similar rule is applicable to freelancers and gig workers. You must refer to the following table to understand the tax slabs for freelancers and gig workers under New Tax Regime: [...] TDS is the amount deducted from payments such as salary, commission, rent, interest, or professional fees. The person who gets the payment at the point of sale, must pay the tax. This minimises tax evasion as the tax is collected at the moment of payment. While submitting ITR, freelancers can claim the deducted TDS and obtain information from Form 26AS. In addition, TDS is deducted at the rate of 10%, and freelancers can only deduct TDS if they have been audited for the last financial year. [...] financial year. However, freelancers can only be audited if the annual gross receipt exceeds ₹50 lakhs, and TDS won’t be applicable in such a scenario.",
-      "score": 0.78393924
+      "title": "Professional Tax for Freelancers: Rates, States & Rules",
+      "url": "https://www.skydo.com/blog/professional-tax-freelancers",
+      "content": "Each state runs its own version of this tax, setting its own slabs and flat fees. Article 276 of the Constitution caps the amount of professional tax that can be levied on any freelancer at ₹2,500 a year. Collection typically rests with the relevant state tax authority or department and the applicable rules vary. [...] Salaried employees under the old tax regime can deduct professional tax paid, up to ₹2,500 a year, under Section 16(iii) of the Income Tax Act. That provision applies to salary income, which freelancers do not file under, since their earnings fall under Profits and Gains from Business and Profession. Freelancers can generally claim professional tax paid as a business expense under Section 37(1) instead, when computing taxable business income. [...] ### Do freelancers in all Indian states pay professional tax?\n\nNo. Delhi, Haryana, Rajasthan, Uttar Pradesh, Punjab, and Uttarakhand have not enacted a professional tax law. The tax applies only in states that have legislated it, including Maharashtra, Karnataka, West Bengal, Tamil Nadu, Telangana, Gujarat, and Andhra Pradesh.\n\n### Does GST registration replace professional tax registration?",
+      "score": 0.8003337
     }
   ],
   "errors": []

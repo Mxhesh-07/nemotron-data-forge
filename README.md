@@ -91,8 +91,10 @@ development. For local testing only you can point the same OpenAI-compatible
 client at one of two card-free endpoints:
 
 **Option A — NVIDIA NIM** (<https://build.nvidia.com>, key `NVIDIA_API_KEY`, no
-card) uses the exact same Nemotron 3 model IDs as the submission, so tests
-exercise the real thing:
+card) runs the real Nemotron 3 models through the same OpenAI-compatible client.
+Note: NIM currently lists many models but most return HTTP 404, so the fallback
+uses `nvidia/nemotron-3-super-120b-a12b` for both generation and grading (the only
+reliably callable Nemotron chat model there right now):
 
 ```dotenv
 LLM_PROVIDER=nvidia

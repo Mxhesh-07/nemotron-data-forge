@@ -71,8 +71,11 @@ _PROVIDER_PRESETS: dict[str, dict[str, str]] = {
         "base_url": "https://integrate.api.nvidia.com/v1/",
         "key_env": "NVIDIA_API_KEY",
         "key_url": "https://build.nvidia.com",
+        # NIM lists many models but most now return 404 ("Function ... not
+        # found"); only nemotron-3-super-120b-a12b is reliably callable, so it
+        # is used for both generation and grading in this dev fallback.
         "generator": "nvidia/nemotron-3-super-120b-a12b",
-        "grader": "nvidia/nemotron-3-ultra-550b-a55b",
+        "grader": "nvidia/nemotron-3-super-120b-a12b",
         "fast": "nvidia/nemotron-3.5-lightning-30b-a3b",
         "embedding": "nvidia/nemotron-3-embed-1b",
     },

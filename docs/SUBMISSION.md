@@ -106,4 +106,5 @@ cost **$0.006**.
 - [ ] Live demo URL (judges can use it free).
 - [ ] Demo video (≤ 3 min) showing a real end-to-end run.
 - [ ] Screenshots of the app + a sample of the generated dataset.
+      (Dev shots in `shots/` prove the UI; **re-take on Token Factory** for submission.)
 - [ ] Feedback section completed from the real Token Factory run.
